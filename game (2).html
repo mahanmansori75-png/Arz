@@ -1,0 +1,2748 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بازی معاملات چند ارز دیجیتال + ربات هوشمند (قیمت واقعی)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ========== Loading Overlay ========== */
+        #loadingOverlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        #loadingOverlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .loader-spinner {
+            width: 70px;
+            height: 70px;
+            border: 5px solid rgba(74, 222, 128, 0.2);
+            border-top-color: #4ade80;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 24px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loader-text {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+        .loader-sub {
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+        .loader-progress {
+            width: 220px;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .loader-bar {
+            height: 100%;
+            width: 30%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            border-radius: 10px;
+            animation: progress 1.5s ease-in-out infinite;
+        }
+        @keyframes progress {
+            0% { width: 15%; margin-right: 0; }
+            50% { width: 60%; margin-right: 20%; }
+            100% { width: 15%; margin-right: 85%; }
+        }
+
+        h1 {
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            text-align: center;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .top-bar {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid #4ade80;
+            border-radius: 12px;
+            padding: 15px 25px;
+            min-width: 200px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(74, 222, 128, 0.15);
+        }
+
+        .info-box .label {
+            font-size: 0.9rem;
+            color: #a0aec0;
+            margin-bottom: 6px;
+        }
+
+        .info-box .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4ade80;
+        }
+
+        .info-box.portfolio .value {
+            color: #c084fc;
+        }
+
+        .info-box .sub-value {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .coin-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 10px 5px 15px;
+            scrollbar-width: thin;
+            scrollbar-color: #4ade80 rgba(255,255,255,0.1);
+        }
+
+        .coin-selector::-webkit-scrollbar { height: 8px; }
+        .coin-selector::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+        .coin-selector::-webkit-scrollbar-thumb { background: #4ade80; border-radius: 4px; }
+
+        .coin-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            min-width: 115px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .coin-btn:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+
+        .coin-btn.active {
+            border-color: var(--coin-color, #4ade80);
+            box-shadow: 0 0 18px var(--coin-color, #4ade80);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .coin-icon-wrap {
+            width: 36px;
+            height: 36px;
+            margin: 0 auto 6px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--coin-color, #fff);
+            box-shadow: 0 0 10px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+
+        .coin-icon-wrap img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .coin-symbol {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--coin-color, #fff);
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .coin-name-fa {
+            font-size: 0.7rem;
+            color: #cbd5e1;
+            display: block;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100px;
+        }
+
+        .coin-price {
+            font-size: 0.78rem;
+            color: #a0aec0;
+            display: block;
+            line-height: 1.35;
+        }
+        .coin-price .usd { color: #4ade80; font-weight: 600; }
+        .coin-price .toman { color: #94a3b8; font-size: 0.72rem; }
+
+
+        .chart-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .tf-btn, .mode-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(74,222,128,0.5);
+            background: rgba(0,0,0,0.35);
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .tf-btn.active, .mode-btn.active {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            border-color: #22c55e;
+            font-weight: 600;
+        }
+        .btn-swap {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+        }
+        .swap-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .swap-row select, .swap-row input {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 1100px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #4ade80;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            line-height: 1.8;
+            min-height: 50px;
+            color: #a0aec0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 340px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 10px;
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1100px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-box {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid #4ade80;
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 280px;
+            text-align: center;
+        }
+
+        .action-box h3 {
+            color: #f97316;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .action-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="number"], select {
+            padding: 12px;
+            border: 2px solid #4ade80;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn-buy {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .btn-sell {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-bot {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-bot.on {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+        }
+
+        .btn-signal {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            margin-top: 12px;
+        }
+
+        .signal-result {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: none;
+        }
+        .signal-result.show { display: block; }
+        .signal-result.buy {
+            background: rgba(34, 197, 94, 0.25);
+            border: 2px solid #22c55e;
+            color: #4ade80;
+        }
+        .signal-result.sell {
+            background: rgba(239, 68, 68, 0.25);
+            border: 2px solid #ef4444;
+            color: #f87171;
+        }
+
+        .quick-btns {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #4ade80;
+            border-radius: 6px;
+            color: #a0aec0;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .bot-box {
+            background: rgba(139, 92, 246, 0.1);
+            border: 2px solid #8b5cf6;
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 280px;
+            text-align: center;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .bot-box h3 {
+            color: #a78bfa;
+            margin-bottom: 15px;
+        }
+
+        .bot-status {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .bot-log {
+            max-height: 140px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: left;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            direction: ltr;
+        }
+
+        .bot-log div {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 3px 0;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            max-width: 1100px;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .message.show { opacity: 1; }
+        .message.success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22c55e;
+            color: #4ade80;
+        }
+        .message.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #f87171;
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: #718096;
+            font-size: 0.85rem;
+            text-align: center;
+            line-height: 1.7;
+        }
+
+        .live-badge {
+            display: inline-block;
+            background: #22c55e;
+            color: #000;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-right: 8px;
+            font-weight: 700;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .search-box input {
+            width: 100%;
+            max-width: 320px;
+            padding: 10px 16px;
+            border: 2px solid #4ade80;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.4);
+            color: #fff;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .coin-count {
+            text-align: center;
+            color: #a0aec0;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .rate-note {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .info-box { min-width: 140px; padding: 12px 15px; }
+            h1 { font-size: 1.4rem; }
+            .coin-btn { min-width: 100px; padding: 8px 8px; }
+            .coin-icon-wrap { width: 30px; height: 30px; }
+            .coin-icon-wrap img { width: 22px; height: 22px; }
+        }
+
+        /* ===== Premium Elegant Theme (Gold + Violet + Cyan) ===== */
+        :root {
+            --bg-1: #0a0614;
+            --bg-2: #120b24;
+            --bg-3: #0d0a1a;
+            --panel: rgba(22, 14, 42, 0.88);
+            --panel-soft: rgba(28, 18, 52, 0.75);
+            --border: rgba(196, 181, 253, 0.22);
+            --border-strong: rgba(251, 191, 36, 0.55);
+            --text: #f8fafc;
+            --muted: #a78bfa;
+            --accent: #fbbf24;
+            --accent-2: #a78bfa;
+            --accent-3: #67e8f9;
+            --success: #34d399;
+            --danger: #fb7185;
+        }
+
+        body {
+            background:
+                radial-gradient(ellipse at 15% 0%, rgba(167, 139, 250, 0.18), transparent 42%),
+                radial-gradient(ellipse at 85% 10%, rgba(251, 191, 36, 0.12), transparent 38%),
+                radial-gradient(ellipse at 50% 100%, rgba(103, 232, 249, 0.08), transparent 45%),
+                linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
+            color: var(--text);
+        }
+
+        #loadingOverlay {
+            background: linear-gradient(160deg, #0a0614, #120b24 55%, #0d0a1a);
+        }
+        .loader-spinner {
+            border-color: rgba(167,139,250,.2);
+            border-top-color: #fbbf24;
+            box-shadow: 0 0 28px rgba(251,191,36,.35);
+        }
+        .loader-text { color: #fde68a; text-shadow: 0 0 12px rgba(251,191,36,.4); }
+        .loader-sub { color: #c4b5fd; }
+        .loader-progress { background: rgba(255,255,255,.08); }
+        .loader-bar { background: linear-gradient(90deg, #fbbf24, #a78bfa, #67e8f9); }
+
+        h1 {
+            background: linear-gradient(90deg, #fde68a, #c4b5fd, #67e8f9, #fde68a);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 6s linear infinite;
+        }
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        .info-box, .action-box, .bot-box, .chart-container {
+            background: linear-gradient(155deg, var(--panel), rgba(12, 8, 28, 0.9));
+            border: 1px solid var(--border);
+            box-shadow:
+                0 14px 40px rgba(0,0,0,.35),
+                inset 0 1px 0 rgba(255,255,255,.06),
+                0 0 0 1px rgba(167,139,250,.05);
+            backdrop-filter: blur(18px);
+            border-radius: 18px;
+        }
+        .info-box:hover, .action-box:hover, .bot-box:hover, .chart-container:hover {
+            border-color: rgba(251,191,36,.4);
+            box-shadow:
+                0 18px 48px rgba(0,0,0,.4),
+                0 0 30px rgba(167,139,250,.12),
+                inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        .info-box {
+            border-top: 2px solid var(--accent);
+            border-radius: 16px;
+        }
+        .info-box .label, .chart-title, .coin-price { color: #c4b5fd; }
+        .info-box .value { color: #fde68a; text-shadow: 0 0 18px rgba(251,191,36,.25); }
+        .info-box.portfolio .value { color: #a5f3fc; text-shadow: 0 0 18px rgba(103,232,249,.25); }
+        .info-box .sub-value { color: #a1a1aa; }
+
+        .coin-selector { scrollbar-color: #fbbf24 rgba(255,255,255,.06); }
+        .coin-selector::-webkit-scrollbar-track { background: rgba(255,255,255,.04); }
+        .coin-selector::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #fbbf24, #a78bfa);
+            border-radius: 6px;
+        }
+        .coin-btn {
+            background: rgba(18, 12, 36, .8);
+            border: 1px solid rgba(196,181,253,.2);
+            border-radius: 16px;
+            transition: all .3s cubic-bezier(.4,0,.2,1);
+        }
+        .coin-btn:hover {
+            border-color: rgba(251,191,36,.55);
+            background: rgba(30, 20, 55, .9);
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 12px 28px rgba(167,139,250,.2);
+        }
+        .coin-btn.active {
+            background: linear-gradient(145deg, rgba(251,191,36,.12), rgba(167,139,250,.1));
+            border-color: #fbbf24;
+            box-shadow: 0 0 24px rgba(251,191,36,.25), 0 0 40px rgba(167,139,250,.12);
+        }
+        .coin-icon-wrap {
+            background: rgba(8, 5, 18, .7);
+            box-shadow: 0 0 12px rgba(0,0,0,.5);
+        }
+        .coin-name-fa { color: #d4d4d8; }
+        .coin-price .usd { color: #fde68a; font-weight: 600; }
+        .coin-price .toman { color: #a1a1aa; }
+
+        .tf-btn, .mode-btn {
+            border: 1px solid rgba(167,139,250,.3);
+            background: rgba(14, 10, 28, .8);
+            color: #e4e4e7;
+            border-radius: 10px;
+            transition: all .25s;
+        }
+        .tf-btn:hover, .mode-btn:hover {
+            border-color: rgba(251,191,36,.6);
+            background: rgba(30, 22, 50, .9);
+        }
+        .tf-btn.active, .mode-btn.active {
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            border-color: #c4b5fd;
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(167,139,250,.3);
+            font-weight: 600;
+        }
+
+        .chart-container {
+            border-top: 2px solid #a78bfa;
+            border-radius: 20px;
+        }
+        .chart-title { border-bottom-color: rgba(196,181,253,.12); color: #c4b5fd; }
+        canvas {
+            background: rgba(6, 4, 14, .85);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+            border-radius: 12px;
+        }
+
+        .action-box h3 { color: #fde68a; }
+        .action-info, .bot-status {
+            background: rgba(8, 5, 18, .65);
+            color: #e4e4e7;
+            border-radius: 10px;
+        }
+        input[type="number"], select, .search-box input {
+            background: rgba(10, 7, 22, .9);
+            border: 1px solid rgba(167,139,250,.35);
+            color: #f8fafc;
+            border-radius: 10px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,.3);
+            transition: border-color .2s, box-shadow .2s;
+        }
+        input[type="number"]:focus, select:focus, .search-box input:focus {
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251,191,36,.15), inset 0 1px 3px rgba(0,0,0,.3);
+            outline: none;
+        }
+        .quick-btn {
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(167,139,250,.35);
+            color: #d4d4d8;
+            border-radius: 8px;
+            transition: all .2s;
+        }
+        .quick-btn:hover {
+            background: rgba(251,191,36,.12);
+            border-color: #fbbf24;
+            color: #fde68a;
+        }
+
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: .3px;
+            transition: all .3s cubic-bezier(.4,0,.2,1);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.08);
+            box-shadow: 0 10px 28px rgba(0,0,0,.3);
+        }
+        .btn-buy {
+            background: linear-gradient(135deg, #34d399, #059669);
+            box-shadow: 0 6px 20px rgba(52,211,153,.25);
+        }
+        .btn-sell {
+            background: linear-gradient(135deg, #fb7185, #e11d48);
+            box-shadow: 0 6px 20px rgba(251,113,133,.25);
+        }
+        .btn-bot {
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            box-shadow: 0 6px 20px rgba(167,139,250,.28);
+        }
+        .btn-bot.on, .btn-swap {
+            background: linear-gradient(135deg, #67e8f9, #0891b2);
+            box-shadow: 0 6px 20px rgba(103,232,249,.25);
+        }
+        .btn-signal {
+            background: linear-gradient(135deg, #fbbf24, #d97706);
+            box-shadow: 0 6px 20px rgba(251,191,36,.28);
+            color: #1c1917;
+        }
+
+        .bot-box {
+            border-color: rgba(167,139,250,.4);
+            background: linear-gradient(155deg, rgba(76, 29, 149, .25), rgba(12, 8, 28, .88));
+            border-radius: 18px;
+        }
+        .bot-box h3 { color: #ddd6fe; }
+        .bot-log {
+            background: rgba(6, 4, 14, .8);
+            border-radius: 10px;
+        }
+        .bot-log div { border-bottom-color: rgba(255,255,255,.06); }
+
+        .message.success {
+            background: linear-gradient(135deg, rgba(52,211,153,.15), rgba(5,150,105,.12));
+            border: 1px solid #34d399;
+            color: #6ee7b7;
+            border-radius: 12px;
+        }
+        .message.error {
+            background: linear-gradient(135deg, rgba(251,113,133,.15), rgba(225,29,72,.12));
+            border: 1px solid #fb7185;
+            color: #fda4af;
+            border-radius: 12px;
+        }
+        .footer, .coin-count { color: #a1a1aa; }
+        .rate-note { color: #a78bfa; }
+        .live-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1c1917;
+            box-shadow: 0 0 12px rgba(251,191,36,.4);
+            animation: pulse 2s infinite;
+        }
+
+        .action-box {
+            border-radius: 16px;
+        }
+        .action-box:nth-child(1) { border-top: 2px solid #34d399; }
+        .action-box:nth-child(2) { border-top: 2px solid #fb7185; }
+        .action-box:nth-child(3) { border-top: 2px solid #67e8f9; }
+
+    
+        /* Auth Overlay */
+        #authOverlay {
+            position: fixed; inset: 0; z-index: 10000;
+            background: linear-gradient(160deg, #0a0614, #120b24 55%, #0d0a1a);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .auth-card {
+            width: 100%; max-width: 420px;
+            background: linear-gradient(155deg, rgba(22,14,42,0.95), rgba(12,8,28,0.98));
+            border: 1px solid rgba(196,181,253,0.3); border-radius: 20px;
+            padding: 28px 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .auth-card h2 {
+            text-align: center; margin-bottom: 6px;
+            background: linear-gradient(90deg, #fde68a, #c4b5fd);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 1.45rem;
+        }
+        .auth-sub { text-align: center; color: #a78bfa; font-size: 0.9rem; margin-bottom: 18px; }
+        .auth-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+        .auth-tabs button {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(167,139,250,0.35);
+            background: rgba(0,0,0,0.35); color: #cbd5e1; cursor: pointer; font-family: inherit; font-weight: 600;
+        }
+        .auth-tabs button.active {
+            background: linear-gradient(135deg, #a78bfa, #7c3aed); color: #fff; border-color: #c4b5fd;
+        }
+        .auth-card input {
+            width: 100%; margin-bottom: 10px; padding: 12px; border-radius: 10px;
+            border: 1px solid rgba(167,139,250,0.35); background: rgba(10,7,22,0.9); color: #fff;
+            font-family: inherit; font-size: 1rem; text-align: center;
+        }
+        .auth-card input:focus { outline: none; border-color: #fbbf24; }
+        .auth-card .auth-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 12px; margin-top: 6px;
+            background: linear-gradient(135deg, #34d399, #059669); color: #fff;
+            font-weight: 700; font-size: 1.05rem; cursor: pointer; font-family: inherit;
+        }
+        #authMsg { text-align: center; margin-top: 12px; font-size: 0.9rem; display: none; }
+        .auth-note {
+            margin-top: 16px; font-size: 0.78rem; color: #71717a; text-align: center; line-height: 1.6;
+        }
+        #gameRoot { display: none; flex-direction: column; align-items: center; width: 100%; }
+        .top-user-bar {
+            width: 100%; max-width: 1100px; display: flex; justify-content: flex-end; gap: 10px;
+            margin-bottom: 10px; flex-wrap: wrap;
+        }
+        .top-user-bar span {
+            background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.4);
+            padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; color: #e9d5ff;
+        }
+        .top-user-bar button {
+            background: rgba(251,113,133,0.2); border: 1px solid #fb7185; color: #fda4af;
+            padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- AUTH OVERLAY -->
+    <div id="authOverlay">
+        <div class="auth-card">
+            <h2>بازی معاملات کریپتو</h2>
+            <p class="auth-sub">ورود یا ثبت‌نام برای شروع</p>
+            <div class="auth-tabs">
+                <button id="tabLogin" class="active" onclick="switchAuthTab('login')">ورود</button>
+                <button id="tabRegister" onclick="switchAuthTab('register')">ثبت‌نام</button>
+            </div>
+            <div id="loginForm">
+                <input type="text" id="loginUser" placeholder="نام کاربری" autocomplete="username">
+                <input type="password" id="loginPass" placeholder="رمز عبور" autocomplete="current-password">
+                <button class="auth-btn" onclick="doLogin()">ورود به بازی</button>
+            </div>
+            <div id="registerForm" style="display:none;">
+                <input type="text" id="regPhone" placeholder="شماره تلفن (مثلاً ۰۹۱۲۱۲۳۴۵۶۷)" inputmode="tel">
+                <input type="text" id="regUser" placeholder="نام کاربری" autocomplete="username">
+                <input type="password" id="regPass" placeholder="رمز عبور" autocomplete="new-password">
+                <input type="password" id="regPass2" placeholder="تکرار رمز عبور">
+                <button class="auth-btn" onclick="doRegister()">ثبت‌نام و ورود</button>
+            </div>
+            <div id="authMsg"></div>
+            <p class="auth-note">بدون نیاز به SMS · داده‌ها در سرور امن ذخیره می‌شوند<br>پس از تنظیم Firebase آماده استفاده است</p>
+        </div>
+    </div>
+
+    <div id="gameRoot">
+        <div class="top-user-bar">
+            <span>👤 <b id="userBadge">کاربر</b></span>
+            <button type="button" onclick="doLogout()">خروج</button>
+        </div>
+
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">منتظر بمانید...</div>
+        <div class="loader-sub">در حال دریافت قیمت‌های واقعی از بازار</div>
+        <div class="loader-progress"><div class="loader-bar"></div></div>
+    </div>
+
+    <h1>🪙 بازی معاملات چند ارز دیجیتال + ربات هوشمند <span class="live-badge">LIVE</span></h1>
+
+    <div class="rate-note" id="rateNote">نرخ تبدیل تقریبی (بازار آزاد): ۱ دلار ≈ ۲۲۵,۰۰۰ تومان</div>
+
+    <div class="top-bar">
+        <div class="info-box">
+            <div class="label">پول نقد</div>
+            <div class="value" id="cash">۱۰۰۰</div>
+            <div class="sub-value" id="cashToman">≈ ۲۲۵,۰۰۰,۰۰۰ تومان</div>
+        </div>
+        <div class="info-box portfolio">
+            <div class="label">ارزش کل پورتفولیو</div>
+            <div class="value" id="portfolio">۱۰۰۰</div>
+            <div class="sub-value" id="portfolioToman">≈ ۲۲۵,۰۰۰,۰۰۰ تومان</div>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="coinSearch" placeholder="جستجوی ارز (نام یا نماد)..." oninput="filterCoins()">
+    </div>
+    <div class="coin-count" id="coinCount"></div>
+    <div class="coin-selector" id="coinSelector"></div>
+
+    <div class="chart-container">
+        <div class="chart-toolbar">
+            <button class="tf-btn active" data-tf="live" onclick="setTimeframe('live')">🟢 زنده</button>
+            <button class="mode-btn active" data-mode="candle" onclick="setChartMode('candle')">📊 کندل</button>
+            <button class="mode-btn" data-mode="line" onclick="setChartMode('line')">📈 خطی ساده</button>
+        </div>
+        <div class="chart-title" id="chartTitle">در حال دریافت قیمت واقعی...</div>
+        <canvas id="chart"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="action-box">
+            <h3>خرید <span id="buyCoinName">ارز</span></h3>
+            <div class="action-info" id="buyInfo"></div>
+            <div class="quick-btns">
+                <button class="quick-btn" onclick="setBuyQty(1)">۱</button>
+                <button class="quick-btn" onclick="setBuyQty(5)">۵</button>
+                <button class="quick-btn" onclick="setBuyQty(10)">۱۰</button>
+                <button class="quick-btn" onclick="setBuyQty(25)">۲۵</button>
+                <button class="quick-btn" onclick="setBuyMax()">همه</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="buyQty" min="0.01" step="0.01" placeholder="تعداد" value="1">
+            </div>
+            <button class="btn btn-buy" onclick="buyCrypto()">خرید ارز</button>
+        </div>
+
+        <div class="action-box">
+            <h3>فروش <span id="sellCoinName">ارز</span></h3>
+            <div class="action-info" id="sellInfo"></div>
+            <div class="quick-btns">
+                <button class="quick-btn" onclick="setSellQty(1)">۱</button>
+                <button class="quick-btn" onclick="setSellQty(5)">۵</button>
+                <button class="quick-btn" onclick="setSellQty(10)">۱۰</button>
+                <button class="quick-btn" onclick="setSellQty(25)">۲۵</button>
+                <button class="quick-btn" onclick="setSellMax()">همه</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="sellQty" min="0.01" step="0.01" placeholder="تعداد" value="1">
+            </div>
+            <button class="btn btn-sell" onclick="sellCrypto()">فروش ارز</button>
+        </div>
+
+        <div class="action-box">
+            <h3>🔄 تبدیل ارز (سواپ)</h3>
+            <div class="action-info" id="swapInfo">از موجودی خود به ارز دیگر تبدیل کنید</div>
+            <div class="swap-row">
+                <select id="swapFrom"></select>
+                <span style="font-size:1.2rem">→</span>
+                <select id="swapTo"></select>
+            </div>
+            <div class="input-group">
+                <input type="number" id="swapQty" min="0.000001" step="any" placeholder="مقدار ارز مبدأ" value="1">
+            </div>
+            <div class="action-info" id="swapPreview" style="margin-bottom:12px">پیش‌نمایش تبدیل...</div>
+            <button class="btn btn-swap" onclick="swapCrypto()">تبدیل کن</button>
+        </div>
+
+        <div class="bot-box">
+            <h3>🤖 ربات معامله‌گر هوشمند</h3>
+            <div class="bot-status" id="botStatus">غیرفعال</div>
+            <div class="input-group">
+                <label>بودجه ربات (دلار)</label>
+                <input type="number" id="botBudget" min="1" step="1" value="5">
+            </div>
+            <div class="input-group">
+                <label>ارز برای پیش‌بینی</label>
+                <select id="botCoin"></select>
+            </div>
+            <button class="btn btn-bot" id="botToggleBtn" onclick="toggleBot()">فعال‌سازی ربات</button>
+
+            <button class="btn btn-signal" onclick="getBuySignal()">🔮 سیگنال خرید / نخر</button>
+            <div class="signal-result" id="signalResult"></div>
+
+            <div class="bot-log" id="botLog">
+                <div>منتظر شروع...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <div class="footer">
+        قیمت‌ها از CoinGecko (دلار) + نرخ لحظه‌ای بازار آزاد تومان • نمایش همزمان دلار و تومان<br>
+        سود/ضرر ربات پس از خاموش شدن به حساب شما برمی‌گردد • واحد اصلی بازی: دلار<br>
+        بیش از ۴۰ ارز محبوب با آیکون رسمی
+    </div>
+
+    <!-- ========== SCRIPT ========== -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ========== Supabase Config ==========
+        const SUPABASE_URL = "https://eqmfydcdcucycooqocw.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxbWZ5ZGNkY3VjbXljb29xb2N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODY0NjUsImV4cCI6MjEwNDQ2MjQ2NX0.-sZbUUmu3DO3I08hIvUZam_7qXUeVA3T-sicTSpB33o";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ========== Game State ==========
+        const state = {
+            cash: 1000,
+            selectedCoin: 'BTC',
+            coins: {
+                BTC:  { name: 'بیت‌کوین',      symbol: 'BTC',  price: 0, amount: 0, candles: [], color: '#f7931a', volatility: 1.2, id: 'bitcoin',          icon: 'btc' },
+                ETH:  { name: 'اتریوم',        symbol: 'ETH',  price: 0, amount: 0, candles: [], color: '#627eea', volatility: 2.0, id: 'ethereum',         icon: 'eth' },
+                USDT: { name: 'تتر',           symbol: 'USDT', price: 1, amount: 0, candles: [], color: '#26a17b', volatility: 0.1, id: 'tether',           icon: 'usdt' },
+                USDC: { name: 'یو‌اس‌دی‌سی',    symbol: 'USDC', price: 1, amount: 0, candles: [], color: '#2775ca', volatility: 0.1, id: 'usd-coin',         icon: 'usdc' },
+                BNB:  { name: 'بایننس کوین',   symbol: 'BNB',  price: 0, amount: 0, candles: [], color: '#f3ba2f', volatility: 2.0, id: 'binancecoin',      icon: 'bnb' },
+                XRP:  { name: 'ریپل',          symbol: 'XRP',  price: 0, amount: 0, candles: [], color: '#23292f', volatility: 3.0, id: 'ripple',           icon: 'xrp' },
+                SOL:  { name: 'سولانا',        symbol: 'SOL',  price: 0, amount: 0, candles: [], color: '#9945FF', volatility: 3.5, id: 'solana',           icon: 'sol' },
+                ADA:  { name: 'کاردانو',       symbol: 'ADA',  price: 0, amount: 0, candles: [], color: '#0033ad', volatility: 3.0, id: 'cardano',          icon: 'ada' },
+                DOGE: { name: 'دوج‌کوین',      symbol: 'DOGE', price: 0, amount: 0, candles: [], color: '#c2a633', volatility: 5.0, id: 'dogecoin',         icon: 'doge' },
+                TRX:  { name: 'ترون',          symbol: 'TRX',  price: 0, amount: 0, candles: [], color: '#ff0013', volatility: 2.5, id: 'tron',             icon: 'trx' },
+                AVAX: { name: 'آوالانچ',       symbol: 'AVAX', price: 0, amount: 0, candles: [], color: '#e84142', volatility: 3.5, id: 'avalanche-2',      icon: 'avax' },
+                LINK: { name: 'چین‌لینک',      symbol: 'LINK', price: 0, amount: 0, candles: [], color: '#2a5ada', volatility: 3.0, id: 'chainlink',        icon: 'link' },
+                DOT:  { name: 'پولکادات',      symbol: 'DOT',  price: 0, amount: 0, candles: [], color: '#e6007a', volatility: 3.0, id: 'polkadot',         icon: 'dot' },
+                MATIC:{ name: 'پالیگان',       symbol: 'MATIC',price: 0, amount: 0, candles: [], color: '#8247e5', volatility: 3.5, id: 'matic-network',    icon: 'matic' },
+                LTC:  { name: 'لایت‌کوین',     symbol: 'LTC',  price: 0, amount: 0, candles: [], color: '#345d9d', volatility: 2.5, id: 'litecoin',         icon: 'ltc' },
+                SHIB: { name: 'شیبا اینو',     symbol: 'SHIB', price: 0, amount: 0, candles: [], color: '#ffa409', volatility: 6.0, id: 'shiba-inu',        icon: 'shib' },
+                BCH:  { name: 'بیت‌کوین کش',   symbol: 'BCH',  price: 0, amount: 0, candles: [], color: '#8dc351', volatility: 2.5, id: 'bitcoin-cash',     icon: 'bch' },
+                XLM:  { name: 'استلار',        symbol: 'XLM',  price: 0, amount: 0, candles: [], color: '#000000', volatility: 3.0, id: 'stellar',          icon: 'xlm' },
+                ATOM: { name: 'کازموس',        symbol: 'ATOM', price: 0, amount: 0, candles: [], color: '#2e3148', volatility: 3.0, id: 'cosmos',           icon: 'atom' },
+                UNI:  { name: 'یونی‌سواپ',     symbol: 'UNI',  price: 0, amount: 0, candles: [], color: '#ff007a', volatility: 3.5, id: 'uniswap',          icon: 'uni' },
+                NEAR: { name: 'نیر پروتکل',    symbol: 'NEAR', price: 0, amount: 0, candles: [], color: '#000000', volatility: 3.5, id: 'near',             icon: 'near' },
+                APT:  { name: 'آپتوس',         symbol: 'APT',  price: 0, amount: 0, candles: [], color: '#00d1a0', volatility: 4.0, id: 'aptos',            icon: 'apt' },
+                SUI:  { name: 'سویی',          symbol: 'SUI',  price: 0, amount: 0, candles: [], color: '#4da2ff', volatility: 4.0, id: 'sui',              icon: 'sui' },
+                HBAR: { name: 'هدرا',          symbol: 'HBAR', price: 0, amount: 0, candles: [], color: '#000000', volatility: 3.5, id: 'hedera-hashgraph', icon: 'hbar' },
+                ICP:  { name: 'اینترنت کامپیوتر', symbol:'ICP', price: 0, amount: 0, candles: [], color: '#29abe2', volatility: 4.0, id: 'internet-computer',icon: 'icp' },
+                FIL:  { name: 'فایل‌کوین',     symbol: 'FIL',  price: 0, amount: 0, candles: [], color: '#0090ff', volatility: 3.5, id: 'filecoin',         icon: 'fil' },
+                ARB:  { name: 'آربیتروم',      symbol: 'ARB',  price: 0, amount: 0, candles: [], color: '#28a0f0', volatility: 4.0, id: 'arbitrum',         icon: 'arb' },
+                OP:   { name: 'آپتیمیسم',      symbol: 'OP',   price: 0, amount: 0, candles: [], color: '#ff0420', volatility: 4.0, id: 'optimism',         icon: 'op' },
+                TON:  { name: 'تون‌کوین',      symbol: 'TON',  price: 0, amount: 0, candles: [], color: '#0088cc', volatility: 3.5, id: 'the-open-network', icon: 'ton' },
+                PEPE: { name: 'پپه',           symbol: 'PEPE', price: 0, amount: 0, candles: [], color: '#3d9a3b', volatility: 7.0, id: 'pepe',             icon: 'pepe' },
+                AAVE: { name: 'آوه',           symbol: 'AAVE', price: 0, amount: 0, candles: [], color: '#b6509e', volatility: 3.5, id: 'aave',             icon: 'aave' },
+                MKR:  { name: 'میکر',          symbol: 'MKR',  price: 0, amount: 0, candles: [], color: '#1aab9b', volatility: 3.0, id: 'maker',            icon: 'mkr' },
+                CRV:  { name: 'کِرو',          symbol: 'CRV',  price: 0, amount: 0, candles: [], color: '#000000', volatility: 4.0, id: 'curve-dao-token',  icon: 'crv' },
+                SAND: { name: 'سندباکس',       symbol: 'SAND', price: 0, amount: 0, candles: [], color: '#00adef', volatility: 4.5, id: 'the-sandbox',      icon: 'sand' },
+                MANA: { name: 'دسنترالند',     symbol: 'MANA', price: 0, amount: 0, candles: [], color: '#ff2d55', volatility: 4.5, id: 'decentraland',     icon: 'mana' },
+                AXS:  { name: 'اکسی اینفینیتی',symbol: 'AXS', price: 0, amount: 0, candles: [], color: '#0055d5', volatility: 4.5, id: 'axie-infinity',    icon: 'axs' },
+                GRT:  { name: 'گراف',          symbol: 'GRT',  price: 0, amount: 0, candles: [], color: '#6f4cff', volatility: 4.0, id: 'the-graph',        icon: 'grt' },
+                ALGO: { name: 'آلگوراند',      symbol: 'ALGO', price: 0, amount: 0, candles: [], color: '#000000', volatility: 3.5, id: 'algorand',         icon: 'algo' },
+                VET:  { name: 'ویچین',         symbol: 'VET',  price: 0, amount: 0, candles: [], color: '#15bdff', volatility: 3.5, id: 'vechain',          icon: 'vet' },
+                EOS:  { name: 'ای‌اواس',       symbol: 'EOS',  price: 0, amount: 0, candles: [], color: '#000000', volatility: 3.5, id: 'eos',              icon: 'eos' },
+                XMR:  { name: 'مونرو',         symbol: 'XMR',  price: 0, amount: 0, candles: [], color: '#ff6600', volatility: 2.5, id: 'monero',           icon: 'xmr' },
+                ETC:  { name: 'اتریوم کلاسیک', symbol: 'ETC',  price: 0, amount: 0, candles: [], color: '#328332', volatility: 3.0, id: 'ethereum-classic', icon: 'etc' },
+                INJ:  { name: 'اینجکتیو',     symbol: 'INJ',  price: 0, amount: 0, candles: [], color: '#00f2fe', volatility: 4.0, id: 'injective-protocol',icon:'inj' },
+                RNDR: { name: 'رندر',          symbol: 'RNDR', price: 0, amount: 0, candles: [], color: '#000000', volatility: 4.0, id: 'render-token',     icon: 'rndr' },
+                IMX:  { name: 'ایمیوتبل',      symbol: 'IMX',  price: 0, amount: 0, candles: [], color: '#00a2f5', volatility: 4.0, id: 'immutable-x',      icon: 'imx' },
+                STX:  { name: 'استکس',         symbol: 'STX',  price: 0, amount: 0, candles: [], color: '#5546ff', volatility: 3.5, id: 'blockstack',       icon: 'stx' },
+                THETA:{ name: 'تتا',           symbol: 'THETA',price: 0, amount: 0, candles: [], color: '#2ab8e6', volatility: 3.5, id: 'theta-token',      icon: 'theta' },
+                FTM:  { name: 'فانتوم',        symbol: 'FTM',  price: 0, amount: 0, candles: [], color: '#13b5ec', volatility: 4.0, id: 'fantom',           icon: 'ftm' },
+                KAS:  { name: 'کسپا',          symbol: 'KAS',  price: 0, amount: 0, candles: [], color: '#70c7ba', volatility: 5.0, id: 'kaspa',            icon: 'kas' }
+            },
+            useRealPrices: true,
+            lastFetchTime: 0,
+            isLoading: true
+        };
+
+        const bot = {
+            active: false,
+            cash: 0,
+            amount: 0,
+            costPrice: 0,
+            lastSignal: null,
+            initialBudget: 0,
+            coin: 'BTC',
+            log: []
+        };
+
+        let currentUserId = null;
+        let userRef = null;
+        let saveTimer = null;
+        let isRemoteLoading = false;
+
+        function buildSavePayload() {
+            const saved = {
+                cash: Number(state.cash) || 0,
+                selected_coin: state.selectedCoin || 'BTC',
+                coins: {},
+                bot: {
+                    active: !!bot.active,
+                    cash: Number(bot.cash) || 0,
+                    amount: Number(bot.amount) || 0,
+                    costPrice: Number(bot.costPrice) || 0,
+                    lastSignal: bot.lastSignal || null,
+                    initialBudget: Number(bot.initialBudget) || 0,
+                    coin: bot.coin || 'BTC'
+                },
+                last_active: Date.now()
+            };
+            Object.keys(state.coins).forEach(symbol => {
+                saved.coins[symbol] = {
+                    amount: Number(state.coins[symbol].amount) || 0
+                };
+            });
+            return saved;
+        }
+
+        async function saveGameState() {
+            if (!currentUserId || isRemoteLoading) return;
+            try {
+                const saved = buildSavePayload();
+                if (saveTimer) clearTimeout(saveTimer);
+                saveTimer = setTimeout(async () => {
+                    const { error } = await supabase
+                        .from('users')
+                        .update(saved)
+                        .eq('id', currentUserId);
+                    if (error) console.warn('ذخیره Supabase ناموفق:', error);
+                }, 400);
+            } catch (e) {
+                console.warn('ذخیره موجودی بازی ناموفق بود:', e);
+            }
+        }
+
+        function applyRemoteState(saved) {
+            if (!saved || typeof saved !== 'object') return false;
+            isRemoteLoading = true;
+            try {
+                if (Number.isFinite(Number(saved.cash))) state.cash = Number(saved.cash);
+                if (saved.selected_coin && state.coins[saved.selected_coin]) {
+                    state.selectedCoin = saved.selected_coin;
+                }
+                if (saved.coins && typeof saved.coins === 'object') {
+                    Object.keys(state.coins).forEach(symbol => {
+                        state.coins[symbol].amount = 0;
+                    });
+                    Object.keys(saved.coins).forEach(symbol => {
+                        if (state.coins[symbol] && Number.isFinite(Number(saved.coins[symbol]?.amount))) {
+                            state.coins[symbol].amount = Number(saved.coins[symbol].amount);
+                        }
+                    });
+                }
+                if (saved.bot && typeof saved.bot === 'object') {
+                    bot.active = !!saved.bot.active;
+                    bot.cash = Number(saved.bot.cash) || 0;
+                    bot.amount = Number(saved.bot.amount) || 0;
+                    bot.costPrice = Number(saved.bot.costPrice) || 0;
+                    bot.lastSignal = saved.bot.lastSignal || null;
+                    bot.initialBudget = Number(saved.bot.initialBudget) || 0;
+                    if (saved.bot.coin && state.coins[saved.bot.coin]) bot.coin = saved.bot.coin;
+                }
+                return true;
+            } finally {
+                isRemoteLoading = false;
+            }
+        }
+
+        // ========== Helpers ==========
+        function toPersian(num) {
+            const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            return String(num).replace(/\d/g, d => persianDigits[d]);
+        }
+
+        function formatNumber(num, decimals = 0) {
+            const safeNum = Number.isFinite(Number(num)) ? Number(num) : 0;
+            const fixed = safeNum.toFixed(decimals);
+            const parts = fixed.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return toPersian(parts.join('.'));
+        }
+
+        function formatUSD(num, decimals = 2) {
+            return formatNumber(num, decimals);
+        }
+
+        function formatToman(usdAmount) {
+            const t = Math.round(usdAmount * TOMAN_RATE);
+            return formatNumber(t, 0);
+        }
+
+        function roundMoney(value) {
+            return Math.round((value + Number.EPSILON) * 100) / 100;
+        }
+
+        function roundCoinAmount(value) {
+            return Math.max(0, Math.round((value + Number.EPSILON) * 1000000) / 1000000);
+        }
+
+        function roundPrice(value) {
+            if (!Number.isFinite(value) || value <= 0) return 0.000001;
+            const decimals = value < 0.0001 ? 8 : (value < 0.01 ? 6 : (value < 10 ? 6 : (value < 1000 ? 4 : 2)));
+            const factor = 10 ** decimals;
+            return Math.max(0.000001, Math.round(value * factor) / factor);
+        }
+
+        function niceRoundNumber(num) {
+            if (!Number.isFinite(num) || num <= 0) return 1;
+            const pow = Math.pow(10, Math.floor(Math.log10(num)));
+            const normalized = num / pow;
+            let nice;
+            if (normalized < 1.5) nice = 1;
+            else if (normalized < 2.5) nice = 2;
+            else if (normalized < 4) nice = 2.5;
+            else if (normalized < 7) nice = 5;
+            else nice = 10;
+            return nice * pow;
+        }
+
+        function getDecimals(price) {
+            if (price >= 10000) return 0;
+            if (price >= 1000) return 0;
+            if (price >= 10) return 2;
+            if (price >= 1) return 4;
+            if (price >= 0.01) return 4;
+            if (price >= 0.0001) return 6;
+            return 8;
+        }
+
+        function getIconUrl(iconSymbol) {
+            return `https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/${iconSymbol.toLowerCase()}.svg`;
+        }
+
+        function priceDual(usd) {
+            const d = getDecimals(usd);
+            return `<span class="usd">$${formatUSD(usd, d)}</span><br><span class="toman">≈ ${formatToman(usd)} تومان</span>`;
+        }
+
+        // ========== Real Price Fetching ==========
+        async function fetchRealPrices() {
+            try {
+                const ids = Object.values(state.coins).map(c => c.id).join(',');
+                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('API response not ok: ' + response.status);
+                const data = await response.json();
+
+                let updated = false;
+                Object.keys(state.coins).forEach(symbol => {
+                    const coin = state.coins[symbol];
+                    const apiData = data[coin.id];
+                    if (apiData && typeof apiData.usd === 'number' && apiData.usd > 0) {
+                        const newPrice = roundPrice(apiData.usd);
+
+                        if (coin.candles.length > 0) {
+                            const prevClose = coin.candles[coin.candles.length - 1].close;
+                            const open = prevClose;
+                            const close = newPrice;
+                            const high = Math.max(open, close) * (1 + Math.random() * 0.002);
+                            const low = Math.min(open, close) * (1 - Math.random() * 0.002);
+                            const volume = Math.round(Math.random() * 2000 + 500);
+
+                            coin.candles.push({
+                                open: roundPrice(open),
+                                high: roundPrice(high),
+                                low: roundPrice(low),
+                                close: close,
+                                volume
+                            });
+                            if (coin.candles.length > MAX_POINTS) coin.candles.shift();
+                        }
+
+                        coin.price = newPrice;
+                        updated = true;
+                    }
+                });
+
+                if (updated) {
+                    state.lastFetchTime = Date.now();
+                    state.useRealPrices = true;
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.error('خطا در دریافت قیمت واقعی:', e);
+                state.lastFetchTime = Date.now();
+                state.useRealPrices = false;
+                return false;
+            }
+        }
+
+        // ========== UI Initialization ==========
+        function initCoinSelector(filter = '') {
+            const selector = document.getElementById('coinSelector');
+            selector.innerHTML = '';
+
+            const filterLower = filter.trim().toLowerCase();
+            let count = 0;
+
+            Object.keys(state.coins).forEach(symbol => {
+                const coin = state.coins[symbol];
+                if (filterLower &&
+                    !coin.symbol.toLowerCase().includes(filterLower) &&
+                    !coin.name.includes(filter) &&
+                    !coin.id.includes(filterLower)) {
+                    return;
+                }
+                count++;
+
+                const btn = document.createElement('div');
+                btn.className = 'coin-btn' + (state.selectedCoin === symbol ? ' active' : '');
+                btn.style.setProperty('--coin-color', coin.color);
+                btn.dataset.symbol = symbol;
+
+                const iconUrl = getIconUrl(coin.icon || coin.symbol.toLowerCase());
+                const d = getDecimals(coin.price);
+
+                btn.innerHTML = `
+                    <div class="coin-icon-wrap">
+                        <img src="${iconUrl}" alt="${coin.symbol}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\'font-size:1.1rem;font-weight:700;color:${coin.color}\\'>${coin.symbol.slice(0,3)}</span>'">
+                    </div>
+                    <span class="coin-symbol">${coin.symbol}</span>
+                    <span class="coin-name-fa">${coin.name}</span>
+                    <span class="coin-price">
+                        <span class="usd">$${formatUSD(coin.price, d)}</span><br>
+                        <span class="toman">≈ ${formatToman(coin.price)} ت</span>
+                    </span>
+                `;
+
+                btn.addEventListener('click', () => selectCoin(symbol));
+                selector.appendChild(btn);
+            });
+
+            document.getElementById('coinCount').textContent = `تعداد ارزهای نمایش‌داده‌شده: ${toPersian(count)} از ${toPersian(Object.keys(state.coins).length)}`;
+        }
+
+        function filterCoins() {
+            const q = document.getElementById('coinSearch').value;
+            initCoinSelector(q);
+        }
+
+        function updateCoinSelector() {
+            const buttons = document.querySelectorAll('.coin-btn');
+            buttons.forEach(btn => {
+                const symbol = btn.dataset.symbol;
+                const coin = state.coins[symbol];
+                if (!coin) return;
+                btn.classList.toggle('active', state.selectedCoin === symbol);
+                const priceEl = btn.querySelector('.coin-price');
+                if (priceEl) {
+                    const d = getDecimals(coin.price);
+                    priceEl.innerHTML = `<span class="usd">$${formatUSD(coin.price, d)}</span><br><span class="toman">≈ ${formatToman(coin.price)} ت</span>`;
+                }
+            });
+        }
+
+        function selectCoin(symbol) {
+            state.selectedCoin = symbol;
+            updateCoinSelector();
+            updateChartTitle();
+            updateActionInfo();
+            const res = document.getElementById('signalResult');
+            if (res) { res.className = 'signal-result'; res.textContent = ''; }
+            if (chartState.timeframe === 'live') {
+                drawChart();
+            } else {
+                loadHistoryForSelected();
+            }
+        }
+
+        function updateChartTitle() {
+            const coin = state.coins[state.selectedCoin];
+            if (coin && coin.candles.length > 0) {
+                const last = coin.candles[coin.candles.length - 1];
+                updateChartTitleWithOHLC(last);
+            } else {
+                document.getElementById('chartTitle').innerHTML = `نمودار قیمت ${coin ? coin.name : 'ارز'}`;
+            }
+        }
+
+        function updateChartTitleWithOHLC(candle) {
+            const coin = state.coins[state.selectedCoin];
+            if (!candle || !coin) return;
+            const isUp = candle.close >= candle.open;
+            const changeColor = isUp ? '#22c55e' : '#ef4444';
+            const changePercent = ((candle.close - candle.open) / candle.open * 100);
+            const liveText = state.useRealPrices
+                ? '<span style="color:#22c55e;font-size:0.75em">● زنده</span>'
+                : '<span style="color:#f59e0b;font-size:0.75em">● شبیه‌سازی</span>';
+
+            const d = getDecimals(candle.close);
+            document.getElementById('chartTitle').innerHTML = `
+                <span style="color:${coin.color}">${coin.name} (${coin.symbol})</span>
+                <span style="color:${changeColor}"> ${isUp ? '▲' : '▼'} ${formatNumber(Math.abs(changePercent), 2)}%</span> ${liveText}<br>
+                <span style="font-size:0.85em;color:#a0aec0">
+                    O:$${formatUSD(candle.open, d)}
+                    H:$${formatUSD(candle.high, d)}
+                    L:$${formatUSD(candle.low, d)}
+                    C:<b style="color:${changeColor}">$${formatUSD(candle.close, d)}</b>
+                    <br>≈ ${formatToman(candle.close)} تومان | حجم: ${formatNumber(candle.volume, 0)}
+                </span>
+            `;
+        }
+
+        function updateActionInfo() {
+            const coin = state.coins[state.selectedCoin];
+            if (!coin) return;
+            document.getElementById('buyCoinName').textContent = coin.name;
+            document.getElementById('sellCoinName').textContent = coin.name;
+            const d = getDecimals(coin.price);
+            document.getElementById('buyInfo').innerHTML =
+                `قیمت: <b style="color:${coin.color}">$${formatUSD(coin.price, d)}</b> (≈ ${formatToman(coin.price)} تومان)<br>موجودی شما: ${formatNumber(coin.amount, 4)}`;
+            document.getElementById('sellInfo').innerHTML =
+                `قیمت: <b style="color:${coin.color}">$${formatUSD(coin.price, d)}</b> (≈ ${formatToman(coin.price)} تومان)<br>موجودی شما: ${formatNumber(coin.amount, 4)}`;
+        }
+
+        function populateBotSelect() {
+            const select = document.getElementById('botCoin');
+            select.innerHTML = '';
+            Object.keys(state.coins).forEach(symbol => {
+                const coin = state.coins[symbol];
+                const opt = document.createElement('option');
+                opt.value = symbol;
+                opt.textContent = `${coin.name} (${coin.symbol})`;
+                if (symbol === 'BTC') opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function populateSwapSelects() {
+            ['swapFrom', 'swapTo'].forEach((id, idx) => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const prev = sel.value;
+                sel.innerHTML = '';
+                Object.keys(state.coins).forEach(symbol => {
+                    const coin = state.coins[symbol];
+                    const opt = document.createElement('option');
+                    opt.value = symbol;
+                    opt.textContent = `${coin.name} (${coin.symbol})`;
+                    sel.appendChild(opt);
+                });
+                if (prev && state.coins[prev]) sel.value = prev;
+                else if (idx === 0) sel.value = 'USDT';
+                else sel.value = 'BTC';
+            });
+            updateSwapPreview();
+        }
+
+        function updateSwapPreview() {
+            const fromSym = document.getElementById('swapFrom')?.value;
+            const toSym = document.getElementById('swapTo')?.value;
+            const qty = parseFloat(document.getElementById('swapQty')?.value);
+            const el = document.getElementById('swapPreview');
+            if (!el || !fromSym || !toSym) return;
+            const from = state.coins[fromSym];
+            const to = state.coins[toSym];
+            if (!from || !to || !Number.isFinite(qty) || qty <= 0) {
+                el.textContent = 'مقدار معتبر وارد کنید';
+                return;
+            }
+            if (fromSym === toSym) {
+                el.textContent = 'ارز مبدأ و مقصد یکسان است';
+                return;
+            }
+            const usdValue = qty * from.price;
+            const toQty = to.price > 0 ? (usdValue / to.price) : 0;
+            el.innerHTML = `${formatNumber(qty, 6)} ${fromSym} ≈ $${formatUSD(usdValue, 2)}<br>→ ${formatNumber(toQty, 6)} ${toSym}`;
+        }
+
+        function swapCrypto() {
+            const fromSym = document.getElementById('swapFrom').value;
+            const toSym = document.getElementById('swapTo').value;
+            const qty = parseFloat(document.getElementById('swapQty').value);
+            if (!Number.isFinite(qty) || qty <= 0) {
+                showMessage('مقدار معتبر وارد کنید', 'error');
+                return;
+            }
+            if (fromSym === toSym) {
+                showMessage('ارز مبدأ و مقصد نباید یکسان باشند', 'error');
+                return;
+            }
+            const from = state.coins[fromSym];
+            const to = state.coins[toSym];
+            if (!from || !to) return;
+            if (qty > from.amount + 1e-12) {
+                showMessage('موجودی ' + fromSym + ' کافی نیست', 'error');
+                return;
+            }
+            if (from.price <= 0 || to.price <= 0) {
+                showMessage('قیمت معتبر نیست', 'error');
+                return;
+            }
+            const usdValue = qty * from.price;
+            const toQty = roundCoinAmount(usdValue / to.price);
+            if (toQty <= 0) {
+                showMessage('مقدار تبدیل خیلی کوچک است', 'error');
+                return;
+            }
+            from.amount = roundCoinAmount(from.amount - qty);
+            if (from.amount < 0.000001) from.amount = 0;
+            to.amount = roundCoinAmount(to.amount + toQty);
+            saveGameState();
+            updateUI();
+            updateActionInfo();
+            updateSwapPreview();
+            showMessage(`✅ ${formatNumber(qty, 6)} ${fromSym} → ${formatNumber(toQty, 6)} ${toSym}`, 'success');
+        }
+
+        function setChartMode(mode) {
+            chartState.mode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === mode);
+            });
+            drawChart();
+        }
+
+        async function setTimeframe(tf) {
+            chartState.timeframe = tf;
+            chartState.crosshair = null;
+            document.querySelectorAll('.tf-btn').forEach(b => {
+                b.classList.toggle('active', String(b.dataset.tf) === String(tf));
+            });
+            if (tf === 'live') {
+                drawChart();
+                return;
+            }
+            const key = state.selectedCoin + '_' + tf;
+            if (chartState.history[key]) {
+                drawChart();
+            }
+            loadHistoryForSelected(false);
+        }
+
+        function buildSyntheticHistory(coin, tf) {
+            const base = coin.price > 0 ? coin.price : 1;
+            const daysMap = { '1': 1/24, '1d': 1, '7': 7, '30': 30, '365': 365 };
+            const days = daysMap[String(tf)] || 1;
+            const n = tf === 1 || tf === '1' ? 60 : (days <= 1 ? 96 : (days <= 7 ? 84 : (days <= 30 ? 90 : 120)));
+            const vol = (coin.volatility || 2) / 100;
+            const pts = [];
+            let p = base * (1 - vol * 0.5 * Math.random());
+            const now = Date.now();
+            const stepMs = (days * 24 * 3600 * 1000) / n;
+            for (let i = 0; i < n; i++) {
+                const noise = (Math.random() - 0.48) * vol;
+                p = Math.max(base * 0.5, Math.min(base * 1.6, p * (1 + noise)));
+                const t = i / (n - 1);
+                p = p * (1 - t * 0.15) + base * (t * 0.15);
+                pts.push({ t: now - (n - 1 - i) * stepMs, close: p, open: p, high: p, low: p });
+            }
+            pts[pts.length - 1].close = base;
+            const candles = [];
+            const group = Math.max(1, Math.floor(pts.length / 40));
+            for (let i = 0; i < pts.length; i += group) {
+                const slice = pts.slice(i, i + group);
+                const closes = slice.map(s => s.close);
+                candles.push({
+                    open: roundPrice(slice[0].close),
+                    high: roundPrice(Math.max(...closes)),
+                    low: roundPrice(Math.min(...closes)),
+                    close: roundPrice(slice[slice.length - 1].close),
+                    volume: Math.round(200 + Math.random() * 800),
+                    t: slice[0].t
+                });
+            }
+            return { line: pts, candles, synthetic: true };
+        }
+
+        async function loadHistoryForSelected(forceNetwork = true) {
+            const symbol = state.selectedCoin;
+            const coin = state.coins[symbol];
+            if (!coin) return;
+            const tf = chartState.timeframe;
+            if (tf === 'live') return;
+
+            const key = symbol + '_' + tf;
+            if (!forceNetwork && chartState.history[key]) {
+                drawChart();
+                return;
+            }
+            if (chartState.history[key] && (Date.now() - (chartState.history[key].fetchedAt || 0) < 3 * 60 * 1000)) {
+                drawChart();
+                return;
+            }
+
+            if (chartState.loadingHistory) return;
+            chartState.loadingHistory = true;
+
+            const titleEl = document.getElementById('chartTitle');
+            if (!chartState.history[key]) {
+                titleEl.textContent = 'در حال بارگذاری تاریخچه...';
+            }
+
+            try {
+                let days = 1;
+                if (tf === 1 || tf === '1') days = 1;
+                else if (tf === '1d') days = 1;
+                else if (tf === 7 || tf === '7') days = 7;
+                else if (tf === 30 || tf === '30') days = 30;
+                else if (tf === 365 || tf === '365') days = 365;
+
+                const wait = Math.max(0, 2000 - (Date.now() - chartState.lastHistoryRequest));
+                if (wait > 0) await new Promise(r => setTimeout(r, wait));
+                chartState.lastHistoryRequest = Date.now();
+
+                const url = `https://api.coingecko.com/api/v3/coins/${coin.id}/market_chart?vs_currency=usd&days=${days}`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('history ' + res.status);
+                const data = await res.json();
+                if (data.status && data.status.error_code) throw new Error(data.status.error_message || 'api error');
+                const prices = data.prices || [];
+                if (!prices.length) throw new Error('empty history');
+
+                let pts = prices.map(p => ({ t: p[0], close: p[1], open: p[1], high: p[1], low: p[1] }));
+                if ((tf === 1 || tf === '1') && pts.length > 20) {
+                    pts = pts.slice(-Math.min(72, Math.floor(pts.length / 3)));
+                }
+
+                const candles = [];
+                const group = Math.max(1, Math.floor(pts.length / 48));
+                for (let i = 0; i < pts.length; i += group) {
+                    const slice = pts.slice(i, i + group);
+                    if (!slice.length) continue;
+                    const closes = slice.map(s => s.close);
+                    candles.push({
+                        open: roundPrice(slice[0].close),
+                        high: roundPrice(Math.max(...closes)),
+                        low: roundPrice(Math.min(...closes)),
+                        close: roundPrice(slice[slice.length - 1].close),
+                        volume: Math.round(Math.random() * 500 + 50),
+                        t: slice[0].t
+                    });
+                }
+
+                const live = coin.price;
+                if (live > 0 && pts.length) {
+                    pts[pts.length - 1].close = live;
+                    if (candles.length) {
+                        const c = candles[candles.length - 1];
+                        c.close = roundPrice(live);
+                        c.high = roundPrice(Math.max(c.high, live));
+                        c.low = roundPrice(Math.min(c.low, live));
+                    }
+                }
+
+                chartState.history[key] = { line: pts, candles, fetchedAt: Date.now(), synthetic: false };
+                chartState.loadingHistory = false;
+                if (chartState.timeframe === tf && state.selectedCoin === symbol) drawChart();
+            } catch (e) {
+                console.warn('history fallback', e.message || e);
+                chartState.loadingHistory = false;
+                if (!chartState.history[key]) {
+                    chartState.history[key] = { ...buildSyntheticHistory(coin, tf), fetchedAt: Date.now() };
+                    showMessage('تاریخچه واقعی در دسترس نبود -- نمودار تقریبی نمایش داده شد', 'error');
+                }
+                if (chartState.timeframe === tf && state.selectedCoin === symbol) drawChart();
+            }
+        }
+
+        // ========== Init Histories ==========
+        async function initHistories() {
+            const success = await fetchRealPrices();
+
+            Object.keys(state.coins).forEach(symbol => {
+                const coin = state.coins[symbol];
+                const basePrice = coin.price > 0 ? coin.price : 1;
+                coin.candles = [];
+
+                let price = basePrice * (0.97 + Math.random() * 0.06);
+                for (let i = 0; i < 30; i++) {
+                    const change = (Math.random() - 0.5) * 2 * (coin.volatility * 0.3);
+                    const open = price;
+                    const close = Math.max(0.000001, open * (1 + change / 100));
+                    const high = Math.max(open, close) * (1 + Math.random() * 0.005);
+                    const low = Math.min(open, close) * (1 - Math.random() * 0.005);
+                    const volume = Math.round(Math.random() * 1500 + 300);
+
+                    coin.candles.push({
+                        open: roundPrice(open),
+                        high: roundPrice(high),
+                        low: roundPrice(low),
+                        close: roundPrice(close),
+                        volume
+                    });
+                    price = coin.candles[coin.candles.length - 1].close;
+                }
+
+                if (coin.candles.length > 0) {
+                    const last = coin.candles[coin.candles.length - 1];
+                    last.close = basePrice;
+                    last.high = Math.max(last.open, basePrice) * 1.001;
+                    last.low = Math.min(last.open, basePrice) * 0.999;
+                    coin.price = basePrice;
+                }
+            });
+
+            if (success) {
+                showMessage('✅ قیمت‌های واقعی با موفقیت دریافت شد (' + Object.keys(state.coins).length + ' ارز)', 'success');
+            } else {
+                showMessage('⚠️ دریافت قیمت واقعی ناموفق بود. از شبیه‌سازی استفاده می‌شود', 'error');
+            }
+        }
+
+        // ========== Main Price Update ==========
+        async function updatePrices() {
+            if (priceUpdateInProgress) return;
+            priceUpdateInProgress = true;
+
+            try {
+                const now = Date.now();
+
+                if (now - lastTomanFetch >= TOMAN_RATE_INTERVAL) {
+                    await fetchTomanRate();
+                }
+
+                let gotReal = false;
+                if (now - state.lastFetchTime >= PRICE_UPDATE_INTERVAL) {
+                    gotReal = await fetchRealPrices();
+                }
+
+                if (!gotReal) {
+                    Object.keys(state.coins).forEach(symbol => {
+                        const coin = state.coins[symbol];
+                        if (coin.candles.length === 0) return;
+
+                        const last = coin.candles[coin.candles.length - 1];
+                        const microChange = (Math.random() - 0.5) * 0.12;
+                        const newClose = roundPrice(last.close * (1 + microChange / 100));
+                        const open = last.close;
+                        const high = Math.max(open, newClose) * (1 + Math.random() * 0.003);
+                        const low = Math.min(open, newClose) * (1 - Math.random() * 0.003);
+                        const volume = Math.round(Math.random() * 800 + 200);
+
+                        coin.candles.push({
+                            open: roundPrice(open),
+                            high: roundPrice(high),
+                            low: roundPrice(low),
+                            close: newClose,
+                            volume
+                        });
+                        if (coin.candles.length > MAX_POINTS) coin.candles.shift();
+                        coin.price = newClose;
+                    });
+                }
+            } catch (e) {
+                console.error("خطا در به‌روزرسانی قیمت:", e);
+            } finally {
+                priceUpdateInProgress = false;
+            }
+
+            updateUI();
+            updateCoinSelector();
+            updateActionInfo();
+
+            if (chartState.timeframe === 'live') {
+                drawChart();
+            } else {
+                updateChartTitle();
+            }
+
+            if (bot.active) botStep();
+        }
+
+        function updateUI() {
+            try {
+                document.getElementById('cash').textContent = '$' + formatUSD(state.cash, 2);
+                document.getElementById('cashToman').textContent = '≈ ' + formatToman(state.cash) + ' تومان';
+
+                let totalPortfolio = state.cash;
+                Object.values(state.coins).forEach(coin => {
+                    totalPortfolio += coin.amount * coin.price;
+                });
+                if (bot.active && state.coins[bot.coin]) {
+                    const coin = state.coins[bot.coin];
+                    totalPortfolio += bot.cash + (bot.amount * coin.price);
+                }
+                document.getElementById('portfolio').textContent = '$' + formatUSD(totalPortfolio, 2);
+                document.getElementById('portfolioToman').textContent = '≈ ' + formatToman(totalPortfolio) + ' تومان';
+            } catch (e) {
+                console.error("خطا در UI:", e);
+            }
+        }
+
+        // ========== Chart Drawing ==========
+        function getActiveCandles() {
+            const symbol = state.selectedCoin;
+            const tf = chartState.timeframe;
+            if (tf !== 'live') {
+                const key = symbol + '_' + tf;
+                const hist = chartState.history[key];
+                if (hist && hist.candles && hist.candles.length >= 2) return hist.candles;
+            }
+            const coin = state.coins[symbol];
+            return (coin && coin.candles) ? coin.candles : [];
+        }
+
+        function getActiveLinePoints() {
+            const symbol = state.selectedCoin;
+            const tf = chartState.timeframe;
+            if (tf !== 'live') {
+                const key = symbol + '_' + tf;
+                const hist = chartState.history[key];
+                if (hist && hist.line && hist.line.length >= 2) {
+                    return hist.line.map(p => p.close);
+                }
+            }
+            const coin = state.coins[symbol];
+            if (!coin || !coin.candles) return [];
+            return coin.candles.map(c => c.close);
+        }
+
+        function getActiveLineMeta() {
+            const symbol = state.selectedCoin;
+            const tf = chartState.timeframe;
+            if (tf !== 'live') {
+                const hist = chartState.history[symbol + '_' + tf];
+                if (hist && hist.line) return hist.line;
+            }
+            const coin = state.coins[symbol];
+            if (!coin || !coin.candles) return [];
+            return coin.candles.map(c => ({ t: null, close: c.close }));
+        }
+
+        function computeChartLayout(w, h, pricesOrCandles, isCandle) {
+            let minP = Infinity, maxP = -Infinity;
+            if (isCandle) {
+                pricesOrCandles.forEach(c => {
+                    minP = Math.min(minP, c.low, c.open, c.close);
+                    maxP = Math.max(maxP, c.high, c.open, c.close);
+                });
+            } else {
+                pricesOrCandles.forEach(p => {
+                    const v = typeof p === 'number' ? p : p.close;
+                    minP = Math.min(minP, v);
+                    maxP = Math.max(maxP, v);
+                });
+            }
+            if (!Number.isFinite(minP) || !Number.isFinite(maxP)) { minP = 0; maxP = 1; }
+            const padding = (maxP - minP) * 0.12 || Math.abs(maxP) * 0.01 || 1;
+            minP -= padding;
+            maxP += padding;
+            const priceRange = maxP - minP || 1;
+            const niceStep = niceRoundNumber(priceRange / 5);
+            minP = Math.floor(minP / niceStep) * niceStep;
+            maxP = Math.ceil(maxP / niceStep) * niceStep;
+
+            const rightMargin = 80;
+            const bottomMargin = 28;
+            const topMargin = 12;
+            const chartW = Math.max(1, w - rightMargin);
+            const chartH = Math.max(1, h - bottomMargin - topMargin);
+            const n = pricesOrCandles.length;
+            const spacing = chartW / Math.max(n, 1);
+            let candleWidth = Math.max(3, Math.min(14, spacing * 0.65));
+            if (n <= 25) candleWidth = Math.max(candleWidth, Math.min(18, spacing * 0.6));
+            if (n >= 80) candleWidth = Math.max(2.5, Math.min(8, spacing * 0.7));
+
+            return { minP, maxP, niceStep, rightMargin, bottomMargin, topMargin, chartW, chartH, spacing, candleWidth, n };
+        }
+
+        function priceToY(price, layout, useVolumeSplit) {
+            const { minP, maxP, topMargin, chartH } = layout;
+            const priceH = useVolumeSplit ? chartH * 0.73 : chartH;
+            return topMargin + priceH - ((price - minP) / (maxP - minP || 1)) * priceH;
+        }
+
+        function drawChart(width, height) {
+            try {
+                const canvas = document.getElementById('chart');
+                const ctx = canvas.getContext('2d');
+                const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+                const w = width || (canvas.clientWidth || canvas.width / dpr);
+                const h = height || (canvas.clientHeight || canvas.height / dpr);
+
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.clearRect(0, 0, w, h);
+
+                const coin = state.coins[state.selectedCoin];
+                if (!coin) return;
+
+                if (chartState.mode === 'line') drawLineChart(ctx, w, h, coin);
+                else drawCandleChart(ctx, w, h, coin);
+                drawLiveBadge(ctx, w, h, coin);
+                drawCrosshairOverlay(ctx, w, h, coin);
+            } catch (e) {
+                console.error("خطا در رسم نمودار:", e);
+            }
+        }
+
+        function drawLiveBadge(ctx, w, h, coin) {
+            if (!coin || !(coin.price > 0)) return;
+            const label = 'زنده $' + formatUSD(coin.price, getDecimals(coin.price));
+            ctx.font = 'bold 12px Vazirmatn';
+            const tw = ctx.measureText(label).width + 16;
+            ctx.fillStyle = 'rgba(34,197,94,0.9)';
+            ctx.fillRect(10, 10, tw, 24);
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'left';
+            ctx.fillText(label, 18, 27);
+        }
+
+        function drawCrosshairOverlay(ctx, w, h, coin) {
+            const ch = chartState.crosshair;
+            if (!ch || ch.index == null || !ch.layout) return;
+            const { topMargin, chartW, chartH } = ch.layout;
+            const priceH = chartState.mode === 'candle' ? chartH * 0.73 : chartH;
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(ch.x, topMargin);
+            ctx.lineTo(ch.x, topMargin + priceH);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, ch.y);
+            ctx.lineTo(chartW, ch.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.beginPath();
+            ctx.arc(ch.x, ch.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            const timeStr = ch.time ? new Date(ch.time).toLocaleString('fa-IR') : '';
+            const lines = [
+                '$' + formatUSD(ch.price, getDecimals(ch.price)),
+                '≈ ' + formatToman(ch.price) + ' ت',
+                timeStr
+            ].filter(Boolean);
+            ctx.font = '12px Vazirmatn';
+            let maxW = 0;
+            lines.forEach(l => { maxW = Math.max(maxW, ctx.measureText(l).width); });
+            const boxW = maxW + 20;
+            const boxH = lines.length * 18 + 12;
+            let bx = ch.x + 14;
+            let by = ch.y - boxH - 10;
+            if (bx + boxW > chartW) bx = ch.x - boxW - 14;
+            if (by < topMargin) by = ch.y + 14;
+            ctx.fillStyle = 'rgba(15,15,30,0.95)';
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(bx, by, boxW, boxH, 8);
+            else ctx.rect(bx, by, boxW, boxH);
+            ctx.fill();
+            ctx.stroke();
+            ctx.textAlign = 'left';
+            lines.forEach((l, i) => {
+                ctx.fillStyle = i === 0 ? '#fbbf24' : '#e2e8f0';
+                ctx.fillText(l, bx + 10, by + 18 + i * 18);
+            });
+            ctx.restore();
+        }
+
+        function handleChartPointer(clientX, clientY, active) {
+            const canvas = document.getElementById('chart');
+            const rect = canvas.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            const w = rect.width;
+            const h = rect.height;
+
+            const isCandle = chartState.mode === 'candle';
+            let data, prices;
+            if (isCandle) {
+                data = getActiveCandles();
+                prices = data;
+            } else {
+                data = getActiveLineMeta();
+                prices = data.map(d => d.close);
+            }
+            if (!prices || prices.length < 2) {
+                chartState.crosshair = null;
+                chartState.pointerActive = false;
+                drawChart();
+                return;
+            }
+
+            const layout = computeChartLayout(w, h, isCandle ? data : prices, isCandle);
+            const { topMargin, chartW, chartH, spacing, candleWidth, n } = layout;
+            const priceH = isCandle ? chartH * 0.73 : chartH;
+
+            if (!active || x < 0 || x > chartW || y < topMargin - 5 || y > topMargin + priceH + 25) {
+                chartState.crosshair = null;
+                chartState.pointerActive = false;
+                drawChart();
+                return;
+            }
+            chartState.pointerActive = true;
+
+            let idx;
+            if (isCandle) {
+                idx = Math.floor(x / spacing);
+            } else {
+                idx = Math.round((x / chartW) * (n - 1));
+            }
+            idx = Math.max(0, Math.min(n - 1, idx));
+
+            let price, time = null, cx, cy;
+            if (isCandle) {
+                const c = data[idx];
+                price = c.close;
+                time = c.t || null;
+                cx = idx * spacing + candleWidth / 2;
+                cy = priceToY(price, layout, true);
+            } else {
+                price = prices[idx];
+                time = data[idx].t || null;
+                cx = (n <= 1) ? 0 : (idx / (n - 1)) * chartW;
+                cy = priceToY(price, layout, false);
+            }
+
+            chartState.crosshair = { x: cx, y: cy, price, time, index: idx, layout };
+            drawChart();
+        }
+
+        function setupChartInteraction() {
+            const canvas = document.getElementById('chart');
+            if (!canvas || canvas._interactionBound) return;
+            canvas._interactionBound = true;
+            canvas.style.touchAction = 'none';
+
+            canvas.addEventListener('mousedown', e => handleChartPointer(e.clientX, e.clientY, true));
+            canvas.addEventListener('mousemove', e => {
+                if (e.buttons === 1 || chartState.pointerActive) handleChartPointer(e.clientX, e.clientY, true);
+            });
+            window.addEventListener('mouseup', () => {
+                if (chartState.pointerActive) {
+                    chartState.pointerActive = false;
+                    chartState.crosshair = null;
+                    drawChart();
+                }
+            });
+            canvas.addEventListener('touchstart', e => {
+                if (e.touches[0]) handleChartPointer(e.touches[0].clientX, e.touches[0].clientY, true);
+            }, { passive: true });
+            canvas.addEventListener('touchmove', e => {
+                if (e.touches[0]) handleChartPointer(e.touches[0].clientX, e.touches[0].clientY, true);
+            }, { passive: true });
+            canvas.addEventListener('touchend', () => {
+                chartState.pointerActive = false;
+                chartState.crosshair = null;
+                drawChart();
+            });
+        }
+
+
+        function drawLineChart(ctx, w, h, coin) {
+            const prices = getActiveLinePoints();
+            if (prices.length < 2) return;
+
+            let minP = Math.min(...prices);
+            let maxP = Math.max(...prices);
+            const padding = (maxP - minP) * 0.12 || maxP * 0.01;
+            minP -= padding;
+            maxP += padding;
+            const priceRange = maxP - minP || 1;
+            const niceStep = niceRoundNumber(priceRange / 5);
+            minP = Math.floor(minP / niceStep) * niceStep;
+            maxP = Math.ceil(maxP / niceStep) * niceStep;
+
+            const rightMargin = 80;
+            const bottomMargin = 28;
+            const topMargin = 12;
+            const chartW = w - rightMargin;
+            const chartH = h - bottomMargin - topMargin;
+
+            ctx.font = '11px Vazirmatn';
+            ctx.fillStyle = '#a0aec0';
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            for (let price = minP; price <= maxP + niceStep * 0.5; price += niceStep) {
+                const p = Math.round(price * 1e6) / 1e6;
+                const y = topMargin + chartH - ((p - minP) / (maxP - minP || 1)) * chartH;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(chartW, y);
+                ctx.stroke();
+                ctx.textAlign = 'left';
+                ctx.fillText('$' + formatUSD(p, getDecimals(p)), chartW + 8, y + 4);
+            }
+
+            // gradient fill
+            const yAt = (price) => topMargin + chartH - ((price - minP) / (maxP - minP || 1)) * chartH;
+            const stepX = chartW / (prices.length - 1);
+
+            ctx.beginPath();
+            prices.forEach((p, i) => {
+                const x = i * stepX;
+                const y = yAt(p);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            // close path for fill
+            ctx.lineTo((prices.length - 1) * stepX, topMargin + chartH);
+            ctx.lineTo(0, topMargin + chartH);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(0, topMargin, 0, topMargin + chartH);
+            const isUp = prices[prices.length - 1] >= prices[0];
+            grad.addColorStop(0, isUp ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // line
+            ctx.beginPath();
+            prices.forEach((p, i) => {
+                const x = i * stepX;
+                const y = yAt(p);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = isUp ? '#22c55e' : '#ef4444';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // last price line
+            const lastPrice = prices[prices.length - 1];
+            const lastY = yAt(lastPrice);
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(0, lastY);
+            ctx.lineTo(chartW, lastY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const priceLabel = '$' + formatUSD(lastPrice, getDecimals(lastPrice));
+            const labelWidth = ctx.measureText(priceLabel).width + 16;
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(chartW + 2, lastY - 12, Math.max(labelWidth, 50), 22);
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 11px Vazirmatn';
+            ctx.textAlign = 'center';
+            ctx.fillText(priceLabel, chartW + 2 + labelWidth / 2, lastY + 4);
+
+            // title
+            const changePct = ((lastPrice - prices[0]) / prices[0]) * 100;
+            const changeColor = changePct >= 0 ? '#22c55e' : '#ef4444';
+            const tfLabel = { live: 'زنده', '1': '۱ ساعت', '1d': '۲۴ ساعت', '7': '۷ روز', '30': '۳۰ روز', '365': '۱ سال' }[String(chartState.timeframe)] || '';
+            document.getElementById('chartTitle').innerHTML = `
+                <span style="color:${coin.color}">${coin.name} (${coin.symbol})</span>
+                <span style="color:${changeColor}"> ${changePct >= 0 ? '▲' : '▼'} ${formatNumber(Math.abs(changePct), 2)}%</span>
+                <span style="color:#94a3b8;font-size:0.8em"> | ${tfLabel} | خطی</span><br>
+                <span style="font-size:0.85em;color:#a0aec0">
+                    روی نمودار: <b style="color:${changeColor}">$${formatUSD(lastPrice, getDecimals(lastPrice))}</b>
+                    | زنده الان: <b style="color:#4ade80">$${formatUSD(coin.price, getDecimals(coin.price))}</b>
+                    ≈ ${formatToman(coin.price)} تومان
+                </span>
+            `;
+        }
+
+        function drawCandleChart(ctx, w, h, coin) {
+            const candles = getActiveCandles();
+            if (candles.length < 2) return;
+
+            const layout = computeChartLayout(w, h, candles, true);
+            const { minP, maxP, niceStep, topMargin, chartW, chartH, spacing, candleWidth } = layout;
+            const volumeH = chartH * 0.15;
+            const priceH = chartH * 0.73;
+            const gapH = chartH * 0.12;
+            const volumeTop = topMargin + priceH + gapH;
+            const gap = Math.max(0, spacing - candleWidth);
+
+            // شبکه قیمت
+            ctx.font = '11px Vazirmatn';
+            ctx.fillStyle = '#a0aec0';
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            for (let price = minP; price <= maxP + niceStep * 0.5; price += niceStep) {
+                const p = Math.round(price * 1e6) / 1e6;
+                const y = priceToY(p, layout, true);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(chartW, y);
+                ctx.stroke();
+                ctx.textAlign = 'left';
+                ctx.fillText('$' + formatUSD(p, getDecimals(p)), chartW + 8, y + 4);
+            }
+
+            // حجم
+            let maxVol = 0;
+            candles.forEach(c => { maxVol = Math.max(maxVol, c.volume || 0); });
+            if (maxVol > 0) {
+                candles.forEach((c, i) => {
+                    const x = i * spacing + gap / 2;
+                    const barH = ((c.volume || 0) / maxVol) * (volumeH - 2);
+                    const y = volumeTop + (volumeH - barH);
+                    ctx.fillStyle = c.close >= c.open ? 'rgba(34,197,94,0.5)' : 'rgba(239,68,68,0.5)';
+                    ctx.fillRect(x, y, candleWidth, Math.max(1, barH));
+                });
+            }
+
+            // کندل‌ها -- بدنه حداقل ۳ پیکسل تا نقطه نقطه نشود
+            candles.forEach((c, i) => {
+                const x = i * spacing + gap / 2;
+                const xCenter = x + candleWidth / 2;
+                const yOpen = priceToY(c.open, layout, true);
+                const yClose = priceToY(c.close, layout, true);
+                const yHigh = priceToY(c.high, layout, true);
+                const yLow = priceToY(c.low, layout, true);
+                const isUp = c.close >= c.open;
+                const color = isUp ? '#22c55e' : '#ef4444';
+
+                // فتیله
+                ctx.strokeStyle = color;
+                ctx.lineWidth = Math.max(1.5, Math.min(2.5, candleWidth * 0.2));
+                ctx.beginPath();
+                ctx.moveTo(xCenter, yHigh);
+                ctx.lineTo(xCenter, yLow);
+                ctx.stroke();
+
+                // بدنه
+                let bodyTop = Math.min(yOpen, yClose);
+                let bodyHeight = Math.abs(yClose - yOpen);
+                if (bodyHeight < 3) {
+                    bodyHeight = 3;
+                    bodyTop = (yOpen + yClose) / 2 - 1.5;
+                }
+                ctx.fillStyle = color;
+                ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, bodyTop, candleWidth, bodyHeight);
+            });
+
+            // خط آخرین قیمت
+            const lastCandle = candles[candles.length - 1];
+            const lastPrice = lastCandle.close;
+            const lastY = priceToY(lastPrice, layout, true);
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(0, lastY);
+            ctx.lineTo(chartW, lastY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const priceLabel = '$' + formatUSD(lastPrice, getDecimals(lastPrice));
+            ctx.font = 'bold 11px Vazirmatn';
+            const labelWidth = ctx.measureText(priceLabel).width + 16;
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(chartW + 2, lastY - 12, Math.max(labelWidth, 50), 22);
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.fillText(priceLabel, chartW + 2 + labelWidth / 2, lastY + 4);
+
+            // عنوان
+            if (chartState.timeframe === 'live') {
+                updateChartTitleWithOHLC(lastCandle);
+            } else {
+                const changePct = ((lastPrice - candles[0].open) / (candles[0].open || 1)) * 100;
+                const changeColor = changePct >= 0 ? '#22c55e' : '#ef4444';
+                const tfLabel = { '1': '۱ ساعت', '1d': '۲۴ ساعت', '7': '۷ روز', '30': '۳۰ روز', '365': '۱ سال' }[String(chartState.timeframe)] || '';
+                document.getElementById('chartTitle').innerHTML = `
+                    <span style="color:${coin.color}">${coin.name} (${coin.symbol})</span>
+                    <span style="color:${changeColor}"> ${changePct >= 0 ? '▲' : '▼'} ${formatNumber(Math.abs(changePct), 2)}%</span>
+                    <span style="color:#94a3b8;font-size:0.8em"> | ${tfLabel} | کندل</span><br>
+                    <span style="font-size:0.85em;color:#a0aec0">
+                        O:$${formatUSD(lastCandle.open, getDecimals(lastCandle.open))}
+                        H:$${formatUSD(lastCandle.high, getDecimals(lastCandle.high))}
+                        L:$${formatUSD(lastCandle.low, getDecimals(lastCandle.low))}
+                        C:<b style="color:${changeColor}">$${formatUSD(lastCandle.close, getDecimals(lastCandle.close))}</b>
+                        | زنده: <b style="color:#4ade80">$${formatUSD(coin.price, getDecimals(coin.price))}</b>
+                        ≈ ${formatToman(coin.price)} تومان
+                    </span>
+                `;
+            }
+        }
+
+        // ========== Trading Functions ==========
+        function buyCrypto() {
+            const qty = parseFloat(document.getElementById('buyQty').value);
+            if (!Number.isFinite(qty) || qty <= 0) {
+                showMessage('لطفاً تعداد معتبر وارد کنید', 'error');
+                return;
+            }
+
+            const coin = state.coins[state.selectedCoin];
+            if (!coin) return;
+            const cost = qty * coin.price;
+
+            if (cost > state.cash) {
+                showMessage('پول کافی ندارید!', 'error');
+                return;
+            }
+
+            state.cash = roundMoney(state.cash - cost);
+            coin.amount = roundCoinAmount(coin.amount + qty);
+            saveGameState();
+
+            updateUI();
+            updateActionInfo();
+            showMessage(`✅ ${formatNumber(qty, 4)} ${coin.symbol} به قیمت $${formatUSD(coin.price, getDecimals(coin.price))} خریداری شد`, 'success');
+        }
+
+        function sellCrypto() {
+            const qty = parseFloat(document.getElementById('sellQty').value);
+            if (!Number.isFinite(qty) || qty <= 0) {
+                showMessage('لطفاً تعداد معتبر وارد کنید', 'error');
+                return;
+            }
+
+            const coin = state.coins[state.selectedCoin];
+            if (!coin) return;
+            if (qty > coin.amount) {
+                showMessage('ارز کافی ندارید!', 'error');
+                return;
+            }
+
+            const revenue = roundMoney(qty * coin.price);
+            if (revenue <= 0 || !Number.isFinite(revenue)) {
+                showMessage('مبلغ فروش معتبر نیست', 'error');
+                return;
+            }
+
+            state.cash = roundMoney(state.cash + revenue);
+            coin.amount = roundCoinAmount(coin.amount - qty);
+            if (coin.amount < 0.000001) coin.amount = 0;
+            saveGameState();
+
+            updateUI();
+            updateActionInfo();
+            showMessage(`✅ ${formatNumber(qty, 4)} ${coin.symbol} به قیمت $${formatUSD(coin.price, getDecimals(coin.price))} فروخته شد`, 'success');
+        }
+
+        function setBuyQty(n) { document.getElementById('buyQty').value = n; }
+        function setSellQty(n) { document.getElementById('sellQty').value = n; }
+
+        function setBuyMax() {
+            const coin = state.coins[state.selectedCoin];
+            if (!coin || coin.price <= 0) return;
+            const max = Math.floor((state.cash / coin.price) * 1000000) / 1000000;
+            document.getElementById('buyQty').value = max > 0 ? max : '';
+        }
+
+        function setSellMax() {
+            const coin = state.coins[state.selectedCoin];
+            if (!coin) return;
+            document.getElementById('sellQty').value = coin.amount > 0 ? coin.amount : '';
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message show ' + type;
+            setTimeout(() => { msg.classList.remove('show'); }, 3000);
+        }
+
+        // ========== Buy / Don't Buy Signal ==========
+        function getBuySignal() {
+            const coin = state.coins[state.selectedCoin];
+            const res = document.getElementById('signalResult');
+
+            if (!coin || coin.candles.length < 7) {
+                res.className = 'signal-result show sell';
+                res.textContent = 'نخر -- داده کافی نیست';
+                return;
+            }
+
+            const closes = coin.candles.map(c => c.close);
+            const sma3 = average(closes.slice(-3));
+            const sma7 = average(closes.slice(-7));
+            const last = closes[closes.length - 1];
+            const prev = closes[closes.length - 2];
+
+            const threshold = 0.008;
+            let shouldBuy = false;
+
+            if (sma3 > sma7 * (1 + threshold) && last >= prev) {
+                shouldBuy = true;
+            } else if (sma3 < sma7 * (1 - threshold)) {
+                shouldBuy = false;
+            } else {
+                shouldBuy = sma3 > sma7;
+            }
+
+            if (shouldBuy) {
+                res.className = 'signal-result show buy';
+                res.textContent = '✅ بخر';
+            } else {
+                res.className = 'signal-result show sell';
+                res.textContent = '❌ نخر';
+            }
+        }
+
+        // ========== Bot Functions ==========
+        function toggleBot() {
+            if (!bot.active) {
+                const budgetInput = document.getElementById('botBudget');
+                const coinSelect = document.getElementById('botCoin');
+                const budget = parseFloat(budgetInput.value);
+                if (!Number.isFinite(budget) || budget < 1) {
+                    showMessage('بودجه ربات باید حداقل ۱ دلار باشد', 'error');
+                    return;
+                }
+                if (state.cash < budget) {
+                    showMessage('پول نقد شما برای این بودجه کافی نیست', 'error');
+                    return;
+                }
+
+                state.cash = roundMoney(state.cash - budget);
+                bot.cash = budget;
+                bot.amount = 0;
+                bot.costPrice = 0;
+                bot.lastSignal = null;
+                bot.initialBudget = budget;
+                bot.coin = coinSelect.value;
+                bot.active = true;
+
+                document.getElementById('botToggleBtn').textContent = 'خاموش‌کردن ربات';
+                document.getElementById('botToggleBtn').classList.add('on');
+                updateBotStatus();
+                addBotLog('ربات فعال شد. بودجه: $' + formatUSD(bot.cash, 2) + '، ارز: ' + bot.coin);
+                updateUI();
+                saveGameState();
+            } else {
+                const coin = state.coins[bot.coin];
+                if (coin) {
+                    const totalValue = bot.cash + (bot.amount * coin.price);
+                    state.cash = roundMoney(state.cash + totalValue);
+                    addBotLog('ربات متوقف شد. کل دارایی به حساب شما برگشت: $' + formatUSD(totalValue, 2));
+                } else {
+                    state.cash = roundMoney(state.cash + bot.cash);
+                    addBotLog('ربات متوقف شد. دارایی به حساب شما برگشت: $' + formatUSD(bot.cash, 2));
+                }
+
+                bot.active = false;
+                bot.cash = 0;
+                bot.amount = 0;
+                bot.costPrice = 0;
+                bot.initialBudget = 0;
+
+                document.getElementById('botToggleBtn').textContent = 'فعال‌سازی ربات';
+                document.getElementById('botToggleBtn').classList.remove('on');
+                document.getElementById('botLog').innerHTML = '<div>منتظر شروع...</div>';
+                updateBotStatus();
+                updateUI();
+                saveGameState();
+            }
+        }
+
+        function botStep() {
+            const coin = state.coins[bot.coin];
+            if (!coin) return;
+
+            const currentPrice = coin.price;
+            if (currentPrice <= 0) return;
+
+            const closes = coin.candles.map(c => c.close);
+            if (closes.length < 7) return;
+
+            const sma3 = average(closes.slice(-3));
+            const sma7 = average(closes.slice(-7));
+            const threshold = 0.015;
+
+            let signal = 'HOLD';
+            if (sma3 > sma7 * (1 + threshold)) signal = 'BUY';
+            else if (sma3 < sma7 * (1 - threshold)) signal = 'SELL';
+
+            if (signal !== bot.lastSignal) {
+                if (signal === 'BUY' && bot.amount === 0 && bot.cash > 0) {
+                    const investAmount = bot.cash * 0.5;
+                    const qty = Math.floor((investAmount / currentPrice) * 1000000) / 1000000;
+                    if (qty > 0) {
+                        bot.amount = roundCoinAmount(qty);
+                        bot.costPrice = currentPrice;
+                        bot.cash = roundMoney(bot.cash - (bot.amount * currentPrice));
+                        addBotLog(`🚀 خرید ${formatNumber(bot.amount, 4)} ${bot.coin} @ $${formatUSD(currentPrice, getDecimals(currentPrice))}`);
+                    }
+                } else if (signal === 'SELL' && bot.amount > 0) {
+                    const revenue = roundMoney(bot.amount * currentPrice);
+                    bot.cash = roundMoney(bot.cash + revenue);
+                    const profit = roundMoney(revenue - (bot.amount * bot.costPrice));
+                    addBotLog(`💰 فروش ${formatNumber(bot.amount, 4)} ${bot.coin} @ $${formatUSD(currentPrice, getDecimals(currentPrice))} (سود/ضرر: $${formatUSD(profit, 2)})`);
+                    bot.amount = 0;
+                    bot.costPrice = 0;
+                }
+                bot.lastSignal = signal;
+            }
+
+            if (signal === 'HOLD' && bot.amount === 0 && bot.cash > 1) {
+                if (Math.random() < 0.15) {
+                    const investAmount = bot.cash * 0.2;
+                    const qty = Math.floor((investAmount / currentPrice) * 1000000) / 1000000;
+                    if (qty > 0) {
+                        bot.amount = roundCoinAmount(qty);
+                        bot.costPrice = currentPrice;
+                        bot.cash = roundMoney(bot.cash - (bot.amount * currentPrice));
+                        addBotLog(`🎲 خرید تصادفی ${formatNumber(bot.amount, 4)} ${bot.coin} @ $${formatUSD(currentPrice, getDecimals(currentPrice))}`);
+                    }
+                }
+            }
+
+            updateBotStatus();
+            updateUI();
+            saveGameState();
+        }
+
+        function average(arr) {
+            if (!Array.isArray(arr) || arr.length === 0) return 0;
+            return arr.reduce((a, b) => a + b, 0) / arr.length;
+        }
+
+        function updateBotStatus() {
+            const statusEl = document.getElementById('botStatus');
+            const coin = state.coins[bot.coin];
+            if (!coin) {
+                statusEl.innerHTML = '<b>وضعیت:</b> غیرفعال';
+                return;
+            }
+            const totalValue = bot.cash + (bot.amount * coin.price);
+            const profit = totalValue - bot.initialBudget;
+
+            statusEl.innerHTML = `
+                <b>وضعیت:</b> ${bot.active ? 'فعال' : 'غیرفعال'}<br>
+                <b>پول نقد ربات:</b> $${formatUSD(bot.cash, 2)} (≈ ${formatToman(bot.cash)} ت)<br>
+                <b>موجودی ارز:</b> ${formatNumber(bot.amount, 4)} ${bot.coin}<br>
+                <b>ارزش کل:</b> $${formatUSD(totalValue, 2)}<br>
+                <b>سود/ضرر:</b> <span style="color:${profit >= 0 ? '#4ade80' : '#f87171'}">$${formatUSD(profit, 2)}</span><br>
+                <b>آخرین سیگنال:</b> ${bot.lastSignal || '--'}
+            `;
+        }
+
+        function addBotLog(msg) {
+            const logDiv = document.getElementById('botLog');
+            const newEntry = document.createElement('div');
+            newEntry.textContent = new Date().toLocaleTimeString('fa-IR') + ' - ' + msg;
+            logDiv.insertBefore(newEntry, logDiv.firstChild);
+            if (logDiv.children.length > 20) {
+                logDiv.removeChild(logDiv.lastChild);
+            }
+        }
+
+        // ========== Resize & Start ==========
+        function resizeCanvas() {
+            const canvas = document.getElementById('chart');
+            const container = canvas.parentElement;
+            const cssWidth = Math.max(1, container.clientWidth - 40);
+            const cssHeight = 340;
+            const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+
+            canvas.style.width = cssWidth + 'px';
+            canvas.style.height = cssHeight + 'px';
+            canvas.width = Math.round(cssWidth * dpr);
+            canvas.height = Math.round(cssHeight * dpr);
+
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            drawChart(cssWidth, cssHeight);
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('hidden');
+            state.isLoading = false;
+        }
+
+        // ========== Auth Functions ==========
+        function switchAuthTab(tab) {
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+            document.getElementById('authMsg').style.display = 'none';
+        }
+
+        function showAuthMsg(text, isErr) {
+            const el = document.getElementById('authMsg');
+            if (!el) return;
+            el.textContent = text;
+            el.style.color = isErr ? '#fb7185' : '#34d399';
+            el.style.display = 'block';
+        }
+
+        async function doRegister() {
+            const phone = document.getElementById('regPhone').value.trim();
+            const username = document.getElementById('regUser').value.trim();
+            const password = document.getElementById('regPass').value;
+            const password2 = document.getElementById('regPass2').value;
+            if (!phone || !username || !password) return showAuthMsg('همه فیلدها الزامی است', true);
+            if (username.length < 3) return showAuthMsg('نام کاربری حداقل ۳ کاراکتر', true);
+            if (password.length < 4) return showAuthMsg('رمز حداقل ۴ کاراکتر', true);
+            if (password !== password2) return showAuthMsg('تکرار رمز مطابقت ندارد', true);
+
+            const { data, error } = await supabase
+                .from('users')
+                .insert([{ username, password, phone, cash: 1000, coins: {}, bot: {}, selected_coin: 'BTC', banned: false }])
+                .select();
+            
+            if (error) return showAuthMsg('خطا در ثبت‌نام: ' + error.message, true);
+            if (data && data[0]) enterGame(data[0]);
+        }
+
+        async function doLogin() {
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value;
+
+            const { data, error } = await supabase
+                .from('users')
+                .select()
+                .eq('username', username)
+                .eq('password', password)
+                .single();
+            
+            if (error || !data) return showAuthMsg('کاربر یافت نشد یا رمز اشتباه است', true);
+            if (data.banned) return showAuthMsg('حساب شما مسدود شده است', true);
+
+            enterGame(data);
+        }
+
+        async function enterGame(user) {
+            applyRemoteState(user);
+            currentUserId = user.id;
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('gameRoot').style.display = 'flex';
+            document.getElementById('userBadge').textContent = user.username || 'کاربر';
+
+            if (bot.active) {
+                const btn = document.getElementById('botToggleBtn');
+                if (btn) {
+                    btn.textContent = 'خاموش‌کردن ربات';
+                    btn.classList.add('on');
+                }
+                const coinSel = document.getElementById('botCoin');
+                if (coinSel && bot.coin) coinSel.value = bot.coin;
+                const budgetInp = document.getElementById('botBudget');
+                if (budgetInp && bot.initialBudget > 0) budgetInp.value = bot.initialBudget;
+                addBotLog('ربات از حافظه بازگردانی شد و همچنان فعال است');
+            }
+
+            updateChartTitle();
+            updateActionInfo();
+            updateUI();
+            updateBotStatus();
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupChartInteraction();
+            saveGameState();
+        }
+
+        function doLogout() {
+            saveGameState();
+            currentUserId = null;
+            userRef = null;
+            document.getElementById('gameRoot').style.display = 'none';
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('authMsg').style.display = 'none';
+        }
+
+        // ========== Main Start ==========
+        let TOMAN_RATE = 225000;
+        let lastTomanFetch = 0;
+        const TOMAN_RATE_INTERVAL = 5 * 60 * 1000;
+        const MAX_POINTS = 60;
+        const PRICE_UPDATE_INTERVAL = 10000;
+        let priceUpdateInProgress = false;
+
+        const chartState = {
+            mode: 'candle',
+            timeframe: 'live',
+            history: {},
+            loadingHistory: false,
+            lastHistoryRequest: 0,
+            crosshair: null,
+            pointerActive: false
+        };
+
+        async function fetchTomanRate() {
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/HosseinOdd/Navasan-API/main/data/fiat.json?t=' + Date.now(), { cache: 'no-store' });
+                if (!res.ok) throw new Error('status ' + res.status);
+                const data = await res.json();
+                let rate = null;
+                if (data && data.usd && typeof data.usd.value === 'number') {
+                    rate = data.usd.value;
+                } else if (data && data.usd && typeof data.usd === 'number') {
+                    rate = data.usd;
+                }
+                if (rate && rate > 1000000) rate = Math.round(rate / 10);
+                if (rate && rate > 50000 && rate < 2000000) {
+                    TOMAN_RATE = Math.round(rate);
+                    lastTomanFetch = Date.now();
+                    const note = document.getElementById('rateNote');
+                    if (note) note.textContent = 'نرخ لحظه‌ای بازار آزاد: ۱ دلار ≈ ' + formatNumber(TOMAN_RATE, 0) + ' تومان';
+                    return true;
+                }
+                throw new Error('invalid rate');
+            } catch (e) {
+                console.warn('دریافت نرخ تومان ناموفق، از مقدار قبلی استفاده می‌شود:', e.message || e);
+                return false;
+            }
+        }
+
+        (async function start() {
+            document.getElementById('rateNote').textContent = 'در حال دریافت نرخ لحظه‌ای دلار به تومان...';
+
+            await fetchTomanRate();
+            await initHistories();
+
+            initCoinSelector();
+            populateBotSelect();
+            populateSwapSelects();
+            document.getElementById('swapQty')?.addEventListener('input', updateSwapPreview);
+            document.getElementById('swapFrom')?.addEventListener('change', updateSwapPreview);
+            document.getElementById('swapTo')?.addEventListener('change', updateSwapPreview);
+
+            updateChartTitle();
+            updateActionInfo();
+            updateUI();
+            updateBotStatus();
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupChartInteraction();
+
+            setTimeout(hideLoading, 400);
+
+            setInterval(updatePrices, 2000);
+            setInterval(saveGameState, 5000);
+            setInterval(async () => {
+                await fetchTomanRate();
+                updateUI();
+                updateCoinSelector();
+                updateActionInfo();
+            }, TOMAN_RATE_INTERVAL);
+        })();
+    </script>
+</body>
+</html>
