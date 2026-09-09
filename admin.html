@@ -1,0 +1,397 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت | بازی معاملات کریپتو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, sans-serif; }
+        body {
+            background: linear-gradient(160deg, #0a0614 0%, #120b24 45%, #0d0a1a 100%);
+            min-height: 100vh; color: #f8fafc; padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 {
+            text-align: center; margin-bottom: 8px; font-size: 1.8rem;
+            background: linear-gradient(90deg, #fde68a, #c4b5fd, #67e8f9);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .subtitle { text-align: center; color: #a78bfa; margin-bottom: 28px; font-size: 0.95rem; }
+        .card {
+            background: linear-gradient(155deg, rgba(22,14,42,0.92), rgba(12,8,28,0.95));
+            border: 1px solid rgba(196,181,253,0.25); border-radius: 18px;
+            padding: 22px; margin-bottom: 22px;
+            box-shadow: 0 14px 40px rgba(0,0,0,.35);
+        }
+        .card h2 { color: #fde68a; margin-bottom: 16px; font-size: 1.2rem; }
+        .stats { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; }
+        .stat-box {
+            flex: 1; min-width: 140px; background: rgba(0,0,0,0.35);
+            border-radius: 12px; padding: 14px; text-align: center;
+            border-top: 2px solid #a78bfa;
+        }
+        .stat-box .label { color: #c4b5fd; font-size: 0.85rem; margin-bottom: 6px; }
+        .stat-box .value { color: #fde68a; font-size: 1.4rem; font-weight: 700; }
+        input, select, button {
+            font-family: inherit; border-radius: 10px; border: 1px solid rgba(167,139,250,0.35);
+            padding: 11px 14px; background: rgba(10,7,22,0.9); color: #f8fafc; font-size: 0.95rem;
+        }
+        input:focus, select:focus { outline: none; border-color: #fbbf24; }
+        .btn {
+            cursor: pointer; font-weight: 600; border: none; transition: all 0.2s;
+            padding: 11px 18px;
+        }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+        .btn-primary { background: linear-gradient(135deg, #a78bfa, #7c3aed); color: #fff; }
+        .btn-success { background: linear-gradient(135deg, #34d399, #059669); color: #fff; }
+        .btn-danger { background: linear-gradient(135deg, #fb7185, #e11d48); color: #fff; }
+        .btn-warn { background: linear-gradient(135deg, #fbbf24, #d97706); color: #1c1917; }
+        .btn-info { background: linear-gradient(135deg, #67e8f9, #0891b2); color: #0c4a6e; }
+        .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+        .row input { flex: 1; min-width: 120px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        th { color: #c4b5fd; font-weight: 600; background: rgba(0,0,0,0.25); }
+        tr:hover td { background: rgba(167,139,250,0.08); }
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+        }
+        .badge-ok { background: rgba(52,211,153,0.2); color: #34d399; }
+        .badge-ban { background: rgba(251,113,133,0.2); color: #fb7185; }
+        .badge-admin { background: rgba(251,191,36,0.2); color: #fbbf24; }
+        .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .actions button { padding: 6px 10px; font-size: 0.8rem; }
+        .msg {
+            padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; display: none;
+        }
+        .msg.show { display: block; }
+        .msg.ok { background: rgba(52,211,153,0.15); border: 1px solid #34d399; color: #6ee7b7; }
+        .msg.err { background: rgba(251,113,133,0.15); border: 1px solid #fb7185; color: #fda4af; }
+        .login-box {
+            max-width: 420px; margin: 80px auto; padding: 32px;
+        }
+        .login-box h2 { text-align: center; margin-bottom: 20px; color: #fde68a; }
+        .login-box input { width: 100%; margin-bottom: 12px; }
+        .login-box .btn { width: 100%; margin-top: 8px; }
+        .hidden { display: none !important; }
+        .config-note {
+            background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.4);
+            border-radius: 12px; padding: 14px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.7;
+            color: #fde68a;
+        }
+        .config-note code { background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; direction: ltr; display: inline-block; }
+        #userDetail {
+            background: rgba(0,0,0,0.4); border-radius: 12px; padding: 16px; margin-top: 12px;
+            display: none; font-size: 0.9rem; line-height: 1.8;
+        }
+        #userDetail.show { display: block; }
+        .search-row { margin-bottom: 14px; }
+        .search-row input { width: 100%; max-width: 320px; }
+        footer { text-align: center; color: #71717a; font-size: 0.8rem; margin-top: 30px; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- ========== LOGIN ADMIN ========== -->
+    <div id="loginScreen" class="card login-box">
+        <h2>ورود مدیر</h2>
+        <div class="config-note" id="configWarning" style="display:none;">
+            ابتدا تنظیمات Supabase را انجام دهید و جدول users را بسازید.
+        </div>
+        <input type="text" id="adminUser" placeholder="نام کاربری مدیر" value="admin">
+        <input type="password" id="adminPass" placeholder="رمز عبور مدیر">
+        <button class="btn btn-primary" onclick="adminLogin()">ورود به پنل</button>
+        <p style="text-align:center;margin-top:14px;color:#a1a1aa;font-size:0.85rem;">
+            پیش‌فرض: admin / admin123 (قابل تغییر در کد)
+        </p>
+    </div>
+
+    <!-- ========== MAIN ADMIN PANEL ========== -->
+    <div id="adminPanel" class="hidden">
+        <h1>پنل مدیریت بازی معاملات کریپتو</h1>
+        <p class="subtitle">مدیریت کاربران · موجودی · ربات · آمار</p>
+
+        <div id="msg" class="msg"></div>
+
+        <div class="card">
+            <div class="stats" id="statsRow">
+                <div class="stat-box"><div class="label">کل کاربران</div><div class="value" id="statUsers">۰</div></div>
+                <div class="stat-box"><div class="label">کاربران فعال</div><div class="value" id="statActive">۰</div></div>
+                <div class="stat-box"><div class="label">مسدود شده</div><div class="value" id="statBanned">۰</div></div>
+                <div class="stat-box"><div class="label">مجموع پول نقد</div><div class="value" id="statCash">$۰</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>افزودن کاربر جدید</h2>
+            <div class="row">
+                <input type="text" id="newPhone" placeholder="شماره تلفن (مثلاً 09121234567)">
+                <input type="text" id="newUsername" placeholder="نام کاربری">
+                <input type="password" id="newPassword" placeholder="رمز عبور">
+                <input type="number" id="newCash" placeholder="موجودی اولیه (دلار)" value="1000" min="0">
+                <button class="btn btn-success" onclick="addUser()">افزودن</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>لیست کاربران</h2>
+            <div class="search-row">
+                <input type="text" id="searchUser" placeholder="جستجو بر اساس نام کاربری یا تلفن..." oninput="renderUsers()">
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>نام کاربری</th>
+                            <th>تلفن</th>
+                            <th>پول نقد</th>
+                            <th>وضعیت</th>
+                            <th>تاریخ ثبت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable"></tbody>
+                </table>
+            </div>
+            <div id="userDetail"></div>
+        </div>
+
+        <div class="card">
+            <h2>عملیات گروهی</h2>
+            <div class="row">
+                <button class="btn btn-warn" onclick="resetAllBalances()">ریست موجودی همه به ۱۰۰۰ دلار</button>
+                <button class="btn btn-info" onclick="refreshUsers()">بروزرسانی لیست</button>
+                <button class="btn btn-danger" onclick="adminLogout()">خروج از پنل</button>
+            </div>
+        </div>
+
+        <footer>
+            پنل مدیریت · داده‌ها در Supabase ذخیره می‌شوند<br>
+            پس از ساخت جدول users و خاموش کردن RLS، همه چیز آماده است.
+        </footer>
+    </div>
+</div>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================================
+//  تنظیمات Supabase -- مقادیر واقعی پروژه شما
+// ============================================================
+const SUPABASE_URL = "https://eqmfydcdcucycooqocw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxbWZ5ZGNkY3VjbXljb29xb2N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODY0NjUsImV4cCI6MjEwNDQ2MjQ2NX0.-sZbUUmu3DO3I08hIvUZam_7qXUeVA3T-sicTSpB33o";
+// اصلاح: نام متغیر را عوض کردیم تا با متغیر سراسری کتابخانه تداخل نداشته باشد
+if (!window.supabase || !window.supabase.createClient) {
+    console.error('کتابخانه Supabase لود نشده است.');
+    alert('خطا: کتابخانه Supabase لود نشد. فیلترشکن را روشن کنید و صفحه را رفرش کنید.');
+}
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// رمز مدیر (می‌توانی عوض کنی)
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "admin123";
+
+let usersCache = {};
+
+function showMsg(text, type) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = 'msg show ' + (type === 'ok' ? 'ok' : 'err');
+    setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function toPersian(n) {
+    return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+}
+function formatNum(n, d = 2) {
+    const x = Number(n) || 0;
+    return toPersian(x.toFixed(d).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+}
+
+function adminLogin() {
+    const u = document.getElementById('adminUser').value.trim();
+    const p = document.getElementById('adminPass').value;
+    if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        refreshUsers();
+    } else {
+        alert('نام کاربری یا رمز اشتباه است');
+    }
+}
+
+function adminLogout() {
+    document.getElementById('adminPanel').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('adminPass').value = '';
+}
+
+async function refreshUsers() {
+    const { data, error } = await sb.from('users').select();
+    if (error) return showMsg('خطا در خواندن کاربران: ' + error.message, 'err');
+    usersCache = {};
+    data.forEach(u => usersCache[u.id] = u);
+    renderUsers();
+    updateStats();
+}
+
+function updateStats() {
+    const list = Object.values(usersCache);
+    let active = 0, banned = 0, totalCash = 0;
+    list.forEach(u => {
+        if (u.banned) banned++; else active++;
+        totalCash += Number(u.cash) || 0;
+        if (u.bot && u.bot.active) totalCash += Number(u.bot.cash) || 0;
+    });
+    document.getElementById('statUsers').textContent = toPersian(list.length);
+    document.getElementById('statActive').textContent = toPersian(active);
+    document.getElementById('statBanned').textContent = toPersian(banned);
+    document.getElementById('statCash').textContent = '$' + formatNum(totalCash, 0);
+}
+
+function renderUsers() {
+    const q = (document.getElementById('searchUser').value || '').trim().toLowerCase();
+    const tbody = document.getElementById('usersTable');
+    const keys = Object.keys(usersCache).filter(uid => {
+        const u = usersCache[uid];
+        if (!q) return true;
+        return (u.username || '').toLowerCase().includes(q) ||
+               (u.phone || '').includes(q) ||
+               uid.toLowerCase().includes(q);
+    });
+    if (!keys.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#a1a1aa;">کاربری یافت نشد</td></tr>';
+        return;
+    }
+    tbody.innerHTML = keys.map(uid => {
+        const u = usersCache[uid];
+        const status = u.banned
+            ? '<span class="badge badge-ban">مسدود</span>'
+            : '<span class="badge badge-ok">فعال</span>';
+        const date = u.created_at ? new Date(u.created_at).toLocaleDateString('fa-IR') : '--';
+        return `<tr>
+            <td><b>${escapeHtml(u.username || uid)}</b></td>
+            <td style="direction:ltr;text-align:left;">${escapeHtml(u.phone || '--')}</td>
+            <td>$${formatNum(u.cash || 0, 2)}</td>
+            <td>${status}</td>
+            <td>${date}</td>
+            <td class="actions">
+                <button class="btn btn-info" onclick="viewUser('${uid}')">جزئیات</button>
+                <button class="btn btn-warn" onclick="resetUser('${uid}')">ریست</button>
+                <button class="btn ${u.banned ? 'btn-success' : 'btn-danger'}" onclick="toggleBan('${uid}')">${u.banned ? 'آزاد' : 'مسدود'}</button>
+                <button class="btn btn-danger" onclick="deleteUser('${uid}')">حذف</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function viewUser(uid) {
+    const u = usersCache[uid];
+    if (!u) return;
+    const coins = u.coins || {};
+    const coinLines = Object.keys(coins)
+        .filter(s => (coins[s].amount || 0) > 0)
+        .map(s => `${s}: ${formatNum(coins[s].amount, 6)}`)
+        .join(' | ') || 'هیچ ارزی ندارد';
+    const bot = u.bot || {};
+    const el = document.getElementById('userDetail');
+    el.className = 'show';
+    el.innerHTML = `
+        <b>جزئیات کاربر:</b> ${escapeHtml(u.username)} (${escapeHtml(u.phone || '--')})<br>
+        <b>شناسه:</b> <span style="direction:ltr">${uid}</span><br>
+        <b>پول نقد:</b> $${formatNum(u.cash, 2)}<br>
+        <b>ارزها:</b> ${coinLines}<br>
+        <b>ربات:</b> ${bot.active ? 'فعال' : 'غیرفعال'} · بودجه: $${formatNum(bot.cash || 0, 2)} · ارز: ${bot.coin || '--'} · مقدار: ${formatNum(bot.amount || 0, 6)}<br>
+        <b>آخرین فعالیت:</b> ${u.last_active ? new Date(u.last_active).toLocaleString('fa-IR') : '--'}
+    `;
+}
+
+async function addUser() {
+    const phone = document.getElementById('newPhone').value.trim();
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const cash = parseFloat(document.getElementById('newCash').value) || 1000;
+    if (!phone || !username || !password) return showMsg('تلفن، نام کاربری و رمز الزامی است', 'err');
+    if (username.length < 3) return showMsg('نام کاربری حداقل ۳ کاراکتر', 'err');
+
+    showMsg('در حال افزودن کاربر...', 'ok');
+    try {
+        const { error } = await sb
+            .from('users')
+            .insert([{ username, password, phone, cash, coins: {}, bot: {}, selected_coin: 'BTC', banned: false }]);
+        if (error) return showMsg('خطا در افزودن کاربر: ' + error.message, 'err');
+        showMsg('کاربر اضافه شد', 'ok');
+        document.getElementById('newPhone').value = '';
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('newCash').value = '1000';
+        refreshUsers();
+    } catch (e) {
+        showMsg('خطای اتصال: ' + e.message, 'err');
+    }
+}
+
+async function resetUser(uid) {
+    if (!confirm('موجودی این کاربر به ۱۰۰۰ دلار و بدون ارز ریست شود؟')) return;
+    const { error } = await sb.from('users').update({
+        cash: 1000,
+        coins: {},
+        bot: { active: false, cash: 0, amount: 0, costPrice: 0, lastSignal: null, initialBudget: 0, coin: 'BTC' },
+        selected_coin: 'BTC'
+    }).eq('id', uid);
+    if (error) return showMsg(error.message, 'err');
+    showMsg('موجودی ریست شد', 'ok');
+    refreshUsers();
+}
+
+async function toggleBan(uid) {
+    const u = usersCache[uid];
+    if (!u) return;
+    const next = !u.banned;
+    const { error } = await sb.from('users').update({ banned: next }).eq('id', uid);
+    if (error) return showMsg(error.message, 'err');
+    showMsg(next ? 'کاربر مسدود شد' : 'کاربر آزاد شد', 'ok');
+    refreshUsers();
+}
+
+async function deleteUser(uid) {
+    if (!confirm('این کاربر برای همیشه حذف شود؟')) return;
+    const { error } = await sb.from('users').delete().eq('id', uid);
+    if (error) return showMsg(error.message, 'err');
+    showMsg('کاربر حذف شد', 'ok');
+    document.getElementById('userDetail').className = '';
+    document.getElementById('userDetail').innerHTML = '';
+    refreshUsers();
+}
+
+async function resetAllBalances() {
+    if (!confirm('موجودی همه کاربران به ۱۰۰۰ دلار ریست شود؟ این عمل برگشت‌ناپذیر است.')) return;
+    const { data, error } = await sb.from('users').select('id');
+    if (error) return showMsg(error.message, 'err');
+    const updates = data.map(u => ({
+        id: u.id,
+        cash: 1000,
+        coins: {},
+        bot: { active: false, cash: 0, amount: 0, costPrice: 0, lastSignal: null, initialBudget: 0, coin: 'BTC' },
+        selected_coin: 'BTC'
+    }));
+    for (const u of updates) {
+        await sb.from('users').update(u).eq('id', u.id);
+    }
+    showMsg('موجودی همه ریست شد', 'ok');
+    refreshUsers();
+}
+
+// Enter key for login
+document.getElementById('adminPass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') adminLogin();
+});
+</script>
+</body>
+</html>
